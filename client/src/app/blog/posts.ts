@@ -7,7 +7,7 @@ export const posts = [
     category: 'Accounting Ops',
     readTime: '5 min read',
     date: '18 Mar 2026',
-    image: '/images/testimonial1.jpg',
+    image: '/images/blog/closing-dashboard.svg',
     content: [
       'Month-end closing slows down when a business uses separate tools for invoicing, expense capture, bank updates, and final reporting. The finance team spends more time chasing entries than reviewing the actual health of the business.',
       'An accounting SaaS platform improves this by bringing billing, purchase tracking, reconciliation, and closing reports into one connected workflow. Instead of exporting data from multiple places, teams work from one finance system that stays updated throughout the month.',
@@ -23,7 +23,7 @@ export const posts = [
     category: 'Workflow Automation',
     readTime: '4 min read',
     date: '18 Mar 2026',
-    image: '/images/testimonial2.jpg',
+    image: '/images/blog/workflow-automation.svg',
     content: [
       'Not every finance task should be automated on day one. The best starting point is work that happens repeatedly, follows clear rules, and can be checked easily by the finance team.',
       'In an accounting SaaS setup, the first wins usually come from recurring invoices, payment reminders, receivable follow-ups, and simple transaction tagging. These save time quickly and remove the operational friction that slows down daily bookkeeping.',
@@ -39,7 +39,7 @@ export const posts = [
     category: 'Finance Strategy',
     readTime: '6 min read',
     date: '18 Mar 2026',
-    image: '/images/testimonial3.jpg',
+    image: '/images/blog/finance-visibility.svg',
     content: [
       'Many businesses begin with invoicing software and assume that finance is handled. But invoices alone do not show collection delays, shrinking margins, rising expenses, or the cash impact of day-to-day decisions.',
       'True finance visibility comes when billing, collections, expenses, reports, and outstanding balances are connected inside one accounting SaaS workflow. Teams can then see what was billed, what was paid, what is delayed, and what needs follow-up.',
@@ -55,7 +55,7 @@ export const posts = [
     category: 'Compliance',
     readTime: '4 min read',
     date: '18 Mar 2026',
-    image: '/images/testimonial4.jpg',
+    image: '/images/blog/gst-compliance.svg',
     content: [
       'GST pressure increases when teams wait until the deadline week to validate entries, tax splits, and missing invoices. A better approach is to spread the work across the month and review exceptions early.',
       'An accounting SaaS platform helps by keeping invoice records, purchase entries, ledger summaries, and tax-ready reports inside one workflow. That reduces spreadsheet dependency and gives finance teams cleaner audit trails.',

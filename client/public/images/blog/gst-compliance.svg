@@ -1,0 +1,19 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="48" fill="#F5FBFF"/>
+  <circle cx="1040" cy="160" r="140" fill="#D6F4FF"/>
+  <circle cx="160" cy="660" r="150" fill="#DCF8F0"/>
+  <rect x="100" y="100" width="1000" height="600" rx="36" fill="white" stroke="#D7E7F2" stroke-width="4"/>
+  <rect x="160" y="150" width="420" height="500" rx="28" fill="#F8FBFF" stroke="#D7E7F2" stroke-width="3"/>
+  <rect x="220" y="210" width="120" height="120" rx="20" fill="#15A7C9"/>
+  <path d="M255 270L285 300L340 240" stroke="white" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="220" y="390" width="300" height="24" rx="12" fill="#DDEFF9"/>
+  <rect x="220" y="440" width="250" height="24" rx="12" fill="#DDEFF9"/>
+  <rect x="220" y="490" width="280" height="24" rx="12" fill="#DDEFF9"/>
+  <text x="660" y="230" fill="#0F2344" font-family="Arial, sans-serif" font-size="34" font-weight="700">GST CHECKLIST</text>
+  <rect x="660" y="270" width="300" height="72" rx="20" fill="#0F2344"/>
+  <text x="700" y="316" fill="#7FE7FF" font-family="Arial, sans-serif" font-size="28" font-weight="700">Invoices matched</text>
+  <rect x="660" y="380" width="300" height="72" rx="20" fill="#15A7C9"/>
+  <text x="705" y="426" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="700">Returns ready</text>
+  <rect x="660" y="490" width="300" height="72" rx="20" fill="#39C39A"/>
+  <text x="715" y="536" fill="#083451" font-family="Arial, sans-serif" font-size="28" font-weight="700">Reports clean</text>
+</svg>
