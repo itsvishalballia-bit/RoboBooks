@@ -1,0 +1,27 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="48" fill="#F3F9FF"/>
+  <circle cx="160" cy="170" r="130" fill="#D8F5FF"/>
+  <circle cx="1020" cy="640" r="170" fill="#DFF7F2"/>
+  <rect x="110" y="110" width="980" height="580" rx="36" fill="white" stroke="#D7E7F2" stroke-width="4"/>
+  <rect x="160" y="160" width="540" height="430" rx="28" fill="#0F2344"/>
+  <text x="210" y="225" fill="#7FE7FF" font-family="Arial, sans-serif" font-size="28" font-weight="700">FINANCE VISIBILITY</text>
+  <rect x="210" y="270" width="180" height="120" rx="20" fill="#163566"/>
+  <text x="240" y="335" fill="white" font-family="Arial, sans-serif" font-size="42" font-weight="700">94%</text>
+  <text x="240" y="370" fill="#C9D8E8" font-family="Arial, sans-serif" font-size="22">collections</text>
+  <rect x="420" y="270" width="220" height="120" rx="20" fill="#15A7C9"/>
+  <text x="455" y="335" fill="white" font-family="Arial, sans-serif" font-size="42" font-weight="700">Rs 8.4L</text>
+  <text x="455" y="370" fill="#083451" font-family="Arial, sans-serif" font-size="22">cash position</text>
+  <path d="M210 495C300 450 345 500 430 448C510 400 570 430 640 360" stroke="#7FE7FF" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="210" cy="495" r="11" fill="#7FE7FF"/>
+  <circle cx="430" cy="448" r="11" fill="#7FE7FF"/>
+  <circle cx="640" cy="360" r="11" fill="#7FE7FF"/>
+  <rect x="770" y="190" width="240" height="120" rx="24" fill="#F8FBFF" stroke="#D7E7F2" stroke-width="3"/>
+  <rect x="770" y="340" width="240" height="120" rx="24" fill="#F8FBFF" stroke="#D7E7F2" stroke-width="3"/>
+  <rect x="770" y="490" width="240" height="120" rx="24" fill="#F8FBFF" stroke="#D7E7F2" stroke-width="3"/>
+  <text x="810" y="245" fill="#0F2344" font-family="Arial, sans-serif" font-size="28" font-weight="700">Margins</text>
+  <text x="810" y="286" fill="#15A7C9" font-family="Arial, sans-serif" font-size="40" font-weight="700">18.6%</text>
+  <text x="810" y="395" fill="#0F2344" font-family="Arial, sans-serif" font-size="28" font-weight="700">Outstanding</text>
+  <text x="810" y="436" fill="#0088C5" font-family="Arial, sans-serif" font-size="40" font-weight="700">42 invoices</text>
+  <text x="810" y="545" fill="#0F2344" font-family="Arial, sans-serif" font-size="28" font-weight="700">Forecast</text>
+  <text x="810" y="586" fill="#39C39A" font-family="Arial, sans-serif" font-size="40" font-weight="700">Stable</text>
+</svg>

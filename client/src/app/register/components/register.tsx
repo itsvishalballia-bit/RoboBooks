@@ -1,160 +1,14 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useRef, FormEvent } from "react";
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import {
-  ALL_PHONE_OPTIONS,
-  shortLabel,
-  flagEmoji,
-} from "../../../lib/phone-codes";
+import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { api } from "@/lib/api";
+import { ALL_PHONE_OPTIONS, flagEmoji, shortLabel } from "../../../lib/phone-codes";
 
-// Error boundary component
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Registration component error:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">
-              Something went wrong
-            </h1>
-            <p className="text-gray-600 mb-4">
-              There was an error loading the registration form.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-// Google OAuth types (for reference)
-
-/* ----------------- Small UI icons ----------------- */
-function ArrowRightIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-      <path
-        d="M5 12h12m0 0-5-5m5 5-5 5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-function QuoteIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true" {...props}>
-      <path d="M18 8C10 8 6 14 6 20c0 5.5 3.7 9.3 8.5 10.1V40H26V20C26 12 22 8 18 8zm24 0c-8 0-12 6-12 12 0 5.5 3.7 9.3 8.5 10.1V40H50V20c0-8-4-12-8-12z" />
-    </svg>
-  );
-}
-
-/* ----------------- Stars with half support ----------------- */
-function StarBase({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" className={className} aria-hidden="true">
-      <path d="M10 1.6l2.5 5.1 5.6.8-4 3.9.9 5.6L10 14.9 5 17l.9-5.6-4-3.9 5.6-.8L10 1.6z" />
-    </svg>
-  );
-}
-function Star({ fill, idBase }: { fill: 0 | 0.5 | 1; idBase: string }) {
-  const halfId = `${idBase}-half`;
-  return (
-    <span className="inline-block relative">
-      <StarBase className="h-3.5 w-3.5 text-slate-300 fill-current" />
-      {fill > 0 && (
-        <svg
-          viewBox="0 0 20 20"
-          className="absolute inset-0 h-3.5 w-3.5 text-amber-400"
-        >
-          <defs>
-            <clipPath id={halfId}>
-              <rect x="0" y="0" width={fill === 0.5 ? 10 : 20} height="20" />
-            </clipPath>
-          </defs>
-          <path
-            d="M10 1.6l2.5 5.1 5.6.8-4 3.9.9 5.6L10 14.9 5 17l.9-5.6-4-3.9 5.6-.8L10 1.6z"
-            clipPath={`url(#${halfId})`}
-            className="fill-current"
-          />
-        </svg>
-      )}
-    </span>
-  );
-}
-function StarRow({ rating, id }: { rating: number; id: string }) {
-  const full = Math.floor(rating);
-  const frac = rating - full;
-  const half = frac >= 0.25 && frac < 0.75 ? 1 : 0;
-  const addFull = frac >= 0.75 ? 1 : 0;
-  const fullTotal = Math.min(5, full + addFull);
-  const empty = 5 - fullTotal - (half ? 1 : 0);
-
-  const stars: React.ReactElement[] = [];
-  for (let i = 0; i < fullTotal; i++)
-    stars.push(<Star key={`f-${i}`} fill={1} idBase={`${id}-f-${i}`} />);
-  if (half) stars.push(<Star key="h" fill={0.5} idBase={`${id}-h`} />);
-  for (let i = 0; i < empty; i++)
-    stars.push(<Star key={`e-${i}`} fill={0} idBase={`${id}-e-${i}`} />);
-  return <div className="mt-[6px] flex items-center gap-1">{stars}</div>;
-}
-
-/* ----------------- Provider icons (inline SVGs) ----------------- */
-function GoogleMark(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 48 48" aria-hidden="true" {...props}>
-      <path
-        fill="#EA4335"
-        d="M24 9.5c3.3 0 6.2 1.1 8.5 3.2l6-6C34.9 3.1 29.8 1 24 1 14.8 1 6.9 6.3 3.2 14.1l7.7 6c1.8-5.8 7.2-10.6 13.1-10.6z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M46.5 24.5c0-1.6-.1-2.8-.4-4.1H24v7.8h12.7c-.6 3-2.4 5.5-5.1 7.2l7.8 6c4.6-4.3 7.1-10.7 7.1-16.9z"
-      />
-      <path
-        fill="#34A853"
-        d="M10.9 27.8a14.5 14.5 0 0 1-.8-4.8c0-1.6.3-3.3.8-4.8l-7.7-6A23 23 0 0 0 1 23c0 3.7.9 7.3 2.6 10.5l7.3-5.7z"
-      />
-      <path
-        fill="#4285F4"
-        d="M24 47c6.5 0 12-2.1 16-5.9l-7.8-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.3 0-11.7-4.2-13.6-9.9l-7.7 6C6.4 42.1 14.5 47 24 47z"
-      />
-    </svg>
-  );
-}
-
-/* ----------------- Types ----------------- */
 type FormData = {
   companyName: string;
   email: string;
@@ -167,191 +21,83 @@ type FormData = {
   state: string;
   agree: boolean;
 };
+
 type Testimonial = {
   quote: string;
   author: string;
   role: string;
-  avatar?: string;
+  avatar: string;
 };
 
-/* ----------------- Rating card (uses PNG logos) ----------------- */
-function RatingCard({
-  logoSrc,
-  label,
-  score,
-  id,
-  labelTint,
-}: {
-  logoSrc: string;
-  label: string;
-  score: number;
-  id: string;
-  labelTint?: string;
-}) {
-  return (
-    <div className="rounded-2xl bg-white shadow-md ring-1 ring-slate-200/80 px-4 py-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="grid size-8 place-items-center rounded-md bg-slate-50">
-            <Image
-              src={logoSrc}
-              alt={label}
-              width={20}
-              height={20}
-              className="h-5 w-5 object-contain"
-              priority
-            />
-          </span>
-          <span
-            className="text-[14px] font-semibold"
-            style={labelTint ? { color: labelTint } : undefined}
-          >
-            {label}
-          </span>
-        </div>
-        <span className="text-[13px] text-slate-600 tabular-nums">
-          {score.toFixed(1)}/5
-        </span>
-      </div>
-      <StarRow rating={score} id={id} />
-    </div>
-  );
-}
+const testimonials: Testimonial[] = [
+  {
+    quote:
+      "Robo Books helped us streamline invoicing, GST filing, and reconciliation in one clean workflow.",
+    author: "CA Sanjeev Archak",
+    role: "Integrabooks | Proprietor",
+    avatar: "/images/testimonial1.jpg",
+  },
+  {
+    quote:
+      "Our finance team closes books faster now, and the dashboard gives us much more confidence every week.",
+    author: "Shruti Mehta",
+    role: "Diginest | CFO",
+    avatar: "/images/testimonial2.jpg",
+  },
+  {
+    quote:
+      "The setup felt modern, simple, and reliable. Even onboarding our team took far less time than expected.",
+    author: "Ankit Yadav",
+    role: "Pixeldesk | Founder",
+    avatar: "/images/testimonial3.jpg",
+  },
+];
 
-function RatingsRow() {
-  return (
-    <div
-      className="
-        mt-4
-        grid
-        grid-cols-[repeat(auto-fit,minmax(160px,1fr))]  /* auto-fit within container */
-        gap-3 sm:gap-4
-      "
-    >
-      <RatingCard
-        id="capterra"
-        label="Capterra"
-        score={4.4}
-        labelTint="#1F6FB2"
-        logoSrc="/images/capterra.png"
-      />
-      <RatingCard id="g2" label="G2" score={4.4} logoSrc="/images/g2.png" />
-      <RatingCard
-        id="play"
-        label="Play"
-        score={4.7}
-        logoSrc="/images/playstore.png"
-      />
-      <RatingCard
-        id="appstore"
-        label="App Store"
-        score={4.8}
-        logoSrc="/images/appstore.png"
-      />
-    </div>
-  );
-}
+const states = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+];
 
-/* ----------------- Page ----------------- */
 export default function Register() {
   const router = useRouter();
   const defaultIN = useMemo(
-    () => ALL_PHONE_OPTIONS.find((o) => o.iso2 === "IN" && o.dial === "+91"),
+    () => ALL_PHONE_OPTIONS.find((option) => option.iso2 === "IN" && option.dial === "+91"),
     []
   );
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    const handleGoogleCallback = async (code: string) => {
-      setLoading(true);
-      setError("");
-
-      try {
-        // Send the authorization code to your backend
-        const response = await api<{
-          success: boolean;
-          user?: { id: string; email: string; companyName: string };
-          message?: string;
-        }>("/api/auth/google/callback", {
-          method: "POST",
-          json: {
-            code,
-            redirectUri: `${window.location.origin}/register`,
-            type: "register",
-          },
-        });
-
-        if (response.success) {
-          console.log("✅ Google registration successful");
-
-          // Show success toast if available
-          if (typeof window !== "undefined" && (window as any).showToast) {
-            (window as any).showToast(
-              "Google registration successful! Welcome to Robo Books.",
-              "success"
-            );
-          }
-
-          // Clear URL parameters
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          );
-
-          // Redirect to dashboard
-          setTimeout(() => {
-            router.push("/dashboard");
-          }, 500);
-        } else {
-          setError(
-            response.message || "Google registration failed. Please try again."
-          );
-          // Clear URL parameters
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          );
-        }
-      } catch (err: unknown) {
-        console.error("❌ Google OAuth callback error:", err);
-        let errorMessage = "Google registration failed. Please try again.";
-
-        if (err instanceof Error) {
-          errorMessage = err.message;
-        } else if (
-          typeof err === "object" &&
-          err !== null &&
-          "message" in err
-        ) {
-          errorMessage = String(err.message);
-        }
-
-        setError(errorMessage);
-        // Clear URL parameters
-        window.history.replaceState(
-          {},
-          document.title,
-          window.location.pathname
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-    const state = urlParams.get("state");
-
-    if (code && state === "register") {
-      console.log("🔄 Processing Google OAuth callback...");
-      handleGoogleCallback(code);
-    }
-  }, [router]);
-
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const timerRef = useRef<number | null>(null);
   const [form, setForm] = useState<FormData>({
     companyName: "",
     email: "",
@@ -364,6 +110,63 @@ export default function Register() {
     state: "Uttar Pradesh",
     agree: false,
   });
+
+  useEffect(() => {
+    const handleGoogleCallback = async (code: string) => {
+      setLoading(true);
+      setError("");
+      try {
+        const response = await api<{ success: boolean; message?: string }>(
+          "/api/auth/google/callback",
+          {
+            method: "POST",
+            json: {
+              code,
+              redirectUri: `${window.location.origin}/register`,
+              type: "register",
+            },
+          }
+        );
+
+        if (response.success) {
+          if (typeof window !== "undefined" && (window as any).showToast) {
+            (window as any).showToast("Google registration successful! Welcome to Robo Books.", "success");
+          }
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(() => router.push("/dashboard"), 500);
+        } else {
+          setError(response.message || "Google registration failed. Please try again.");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Google registration failed. Please try again.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const state = params.get("state");
+    if (code && state === "register") {
+      handleGoogleCallback(code);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (paused) {
+      return;
+    }
+    timerRef.current = window.setInterval(() => {
+      setActive((current) => (current + 1) % testimonials.length);
+    }, 5000);
+    return () => {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+      }
+    };
+  }, [paused]);
 
   const onChange =
     (key: keyof FormData) =>
@@ -384,41 +187,16 @@ export default function Register() {
     e.preventDefault();
     setError("");
 
-    // Client-side validation
-    if (!form.companyName.trim()) {
-      setError("Please enter your company name.");
-      return;
-    }
-    if (!/^\S+@\S+\.\S+?/.test(form.email)) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-    if (!form.phoneNumber.trim()) {
-      setError("Please enter your mobile number.");
-      return;
-    }
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (!form.agree) {
-      setError("You must agree to the Terms of Service and Privacy Policy.");
-      return;
-    }
-
-    // Prevent multiple submissions
-    if (loading) {
-      return;
-    }
+    if (!form.companyName.trim()) return setError("Please enter your company name.");
+    if (!/^\S+@\S+\.\S+?$/.test(form.email)) return setError("Please enter a valid email address.");
+    if (!form.phoneNumber.trim()) return setError("Please enter your mobile number.");
+    if (form.password.length < 6) return setError("Password must be at least 6 characters.");
+    if (!form.agree) return setError("You must agree to the Terms of Service and Privacy Policy.");
+    if (loading) return;
 
     try {
       setLoading(true);
-
-      const response = await api<{
-        success: boolean;
-        user?: { id: string; email: string; companyName: string };
-        message?: string;
-      }>("/api/auth/register", {
+      const response = await api<{ success: boolean; message?: string }>("/api/auth/register", {
         method: "POST",
         json: {
           companyName: form.companyName.trim(),
@@ -433,607 +211,305 @@ export default function Register() {
       });
 
       if (response.success) {
-        // Show success toast if available
         if (typeof window !== "undefined" && (window as any).showToast) {
           (window as any).showToast(
             "Registration submitted successfully! Please wait for admin approval.",
             "success"
           );
         }
-
-        // Registration submitted successfully, show approval message
-        setError(""); // Clear any existing errors
-        alert(
-          "Registration submitted successfully! Your account will be activated after admin approval. You will be able to login once approved."
-        );
+        alert("Registration submitted successfully! Your account will be activated after admin approval. You will be able to login once approved.");
         router.push("/signin");
       } else {
         setError(response.message || "Registration failed. Please try again.");
       }
     } catch (err: unknown) {
-      console.error("Registration error:", err);
-      let errorMessage = "Something went wrong. Please try again.";
-
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === "object" && err !== null && "message" in err) {
-        errorMessage = String(err.message);
-      }
-
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  /* Google OAuth using Google Identity Services */
-  const handleGoogleAuth = () => {
-    if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-      setError("Google Client ID not configured.");
-      return;
-    }
-
-    // Debug logging
-    console.log("�� Debug info:");
-    console.log("window.location.origin:", window.location.origin);
-    console.log("window.location.href:", window.location.href);
-    console.log(
-      "NEXT_PUBLIC_GOOGLE_CLIENT_ID:",
-      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-    );
-
-    // Hardcode the redirect URI to fix truncation issue
-    const redirectUri = "http://localhost:3000/register";
-    console.log("🎯 Using hardcoded redirect URI:", redirectUri);
-
-    // Use the correct Google OAuth v2 endpoint
-    const googleAuthUrl = new URL(
-      "https://accounts.google.com/o/oauth2/v2/auth"
-    );
-    googleAuthUrl.searchParams.set(
-      "client_id",
-      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-    );
-    googleAuthUrl.searchParams.set("redirect_uri", redirectUri);
-    googleAuthUrl.searchParams.set("response_type", "code");
-    googleAuthUrl.searchParams.set("scope", "openid email profile");
-    googleAuthUrl.searchParams.set("state", "register");
-
-    const finalUrl = googleAuthUrl.toString();
-    console.log("🎯 Final Google OAuth URL:", finalUrl);
-
-    window.location.href = finalUrl;
-  };
-
-  const testimonials: Testimonial[] = [
-    {
-      quote:
-        "With Robo Books’ finance suite, we saved time and money while retaining customer satisfaction—posting over 20% YoY revenue growth.",
-      author: "CA Sanjeev Archak",
-      role: "Integrabooks · Proprietor",
-      avatar: "/images/testimonial1.jpg",
-    },
-    {
-      quote:
-        "Automations and GST-ready invoicing cut monthly close by days. The team loves how fast it is.",
-      author: "Shruti Mehta",
-      role: "CFO · Diginest",
-      avatar: "/images/testimonial2.jpg",
-    },
-    {
-      quote:
-        "From billing to reconciliation, it just flows. Support is fantastic and onboarding was seamless.",
-      author: "Ankit Yadav",
-      role: "Founder · Pixeldesk",
-      avatar: "/images/testimonial3.jpg",
-    },
-  ];
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const timerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (paused) return;
-    timerRef.current = window.setInterval(() => {
-      setIndex((i) => (i + 1) % testimonials.length);
-    }, 5000);
-    return () => {
-      if (timerRef.current) window.clearInterval(timerRef.current);
-    };
-  }, [paused, testimonials.length]);
-
   return (
-    <main
-      className={[
-        "relative mx-auto w-full",
-        "max-w-[1100px] lg:max-w-6xl",
-        "px-3 sm:px-4 py-6 sm:py-10",
-        "min-h-[100svh]",
-      ].join(" ")}
-    >
-      {/* Ambient blobs */}
+    <main className="relative overflow-hidden">
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div
-          className="absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl opacity-25"
-          style={{
-            background:
-              "radial-gradient(120px 120px at 40% 40%, rgba(34,197,94,0.33), transparent), radial-gradient(200px 200px at 70% 70%, rgba(37,99,235,0.33), transparent)",
-          }}
-        />
-        <div
-          className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full blur-3xl opacity-20"
-          style={{
-            background:
-              "radial-gradient(160px 160px at 60% 40%, rgba(16,185,129,0.33), transparent), radial-gradient(220px 220px at 30% 70%, rgba(59,130,246,0.33), transparent)",
-          }}
-        />
-      </div>
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 12% 18%, rgba(0,166,201,0.14), transparent 28%), radial-gradient(circle at 82% 10%, rgba(23,129,191,0.12), transparent 25%), radial-gradient(circle at 90% 82%, rgba(10,166,201,0.1), transparent 26%)",
+        }}
+      />
 
-      {/* Card container */}
-      <section className="relative grid overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl shadow-2xl ring-1 ring-black/5 md:grid-cols-2">
-        <div
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 to-emerald-500"
-        />
+      <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-8 md:px-8 lg:px-20 lg:pb-14 lg:pt-10">
+        <section className="overflow-hidden rounded-[36px] border border-[#d9eef5] bg-white shadow-[0_40px_120px_rgba(15,35,68,0.14)]">
+          <div className="h-1.5 bg-gradient-to-r from-[#0aa6c9] via-[#1781bf] to-[#20c5af]" />
+          <div className="grid lg:grid-cols-[1.02fr_0.98fr]">
+            <aside className="relative overflow-hidden bg-[#0f2344] px-6 py-7 text-white sm:px-7 lg:px-9 lg:py-8">
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(circle at 18% 18%, rgba(10,166,201,0.24), transparent 32%), radial-gradient(circle at 82% 14%, rgba(255,255,255,0.1), transparent 22%), linear-gradient(180deg, rgba(15,35,68,0.9) 0%, rgba(16,43,84,0.96) 58%, rgba(8,33,66,1) 100%)",
+                }}
+              />
+              <div className="pointer-events-none absolute inset-0 opacity-25">
+                <svg viewBox="0 0 800 800" className="h-full w-full" preserveAspectRatio="none">
+                  <path d="M-10,210 C220,380 470,140 820,300" fill="none" stroke="#0aa6c9" strokeWidth="3" />
+                  <path d="M-20,470 C260,620 510,350 850,540" fill="none" stroke="#1781bf" strokeWidth="3" />
+                </svg>
+              </div>
 
-        {/* LEFT: Trusted + testimonial + ratings (PNG logos) */}
-        <aside className="relative overflow-hidden p-6 sm:p-8 md:p-10 bg-gradient-to-b from-blue-600 via-blue-600 to-emerald-600 text-white">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(800px 400px at 120% -10%, rgba(255,255,255,0.08), transparent 60%), radial-gradient(600px 300px at -10% 110%, rgba(255,255,255,0.06), transparent 60%)",
-            }}
-          />
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1.5 text-sm text-cyan-100 backdrop-blur">
+                  <Sparkles size={16} />
+                  Homepage matched UI
+                </div>
+                <h2 className="mt-4 max-w-md text-[2rem] font-bold leading-tight sm:text-[2.35rem]">
+                  Consistent blue-cyan branding and a stronger first impression
+                </h2>
+                <p className="mt-3 max-w-xl text-[15px] leading-7 text-slate-200">
+                  The register page now carries the same premium tone as your homepage with darker navy surfaces, cyan highlights, and cleaner cards.
+                </p>
 
-          <div className="relative mx-auto w-full max-w-[640px] lg:max-w-[700px]">
-            <h2 className="text-3xl sm:text-4xl font-semibold leading-tight">
-              Trusted by
-              <br className="hidden sm:block" /> businesses and CAs
-            </h2>
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  {[
+                    ["14 days", "Free trial access"],
+                    ["24/7", "Cloud availability"],
+                    ["100%", "Secure onboarding flow"],
+                  ].map(([value, label]) => (
+                    <div key={value} className="rounded-[22px] border border-white/10 bg-white/10 p-3 backdrop-blur">
+                      <p className="text-[1.2rem] font-bold leading-none">{value}</p>
+                      <p className="mt-2 text-[13px] leading-5 text-slate-300">{label}</p>
+                    </div>
+                  ))}
+                </div>
 
-            {/* Testimonial card */}
-            <div
-              className="mt-6 sm:mt-8 rounded-3xl bg-blue-900/50 backdrop-blur-md ring-1 ring-white/15 p-5 sm:p-7"
-              onMouseEnter={() => setPaused(true)}
-              onMouseLeave={() => setPaused(false)}
-            >
-              <QuoteIcon className="h-8 w-8 text-blue-300/70" />
-
-              <div className="relative mt-3 sm:mt-4 min-h-[120px]">
-                {testimonials.map((t, i) => (
-                  <div
-                    key={i}
-                    className={[
-                      "absolute inset-0 transition-opacity duration-500",
-                      i === index ? "opacity-100" : "opacity-0",
-                    ].join(" ")}
-                    aria-hidden={i !== index}
-                  >
-                    <p className="text-[15px] sm:text-base leading-7 text-white/95">
-                      {t.quote.includes("20% YoY") ? (
-                        <>
-                          {t.quote.split("20% YoY")[0]}
-                          <span className="font-semibold text-emerald-200">
-                            20% YoY
-                          </span>
-                          {t.quote.split("20% YoY")[1]}
-                        </>
-                      ) : (
-                        t.quote
-                      )}
-                    </p>
-
-                    <div className="mt-5 flex items-center gap-4">
-                      <Image
-                        src={t.avatar ?? "/images/testimonial1.jpg"}
-                        alt={t.author}
-                        width={44}
-                        height={44}
-                        className="h-11 w-11 rounded-full ring-2 ring-emerald-400/60 object-cover"
-                      />
-                      <div className="leading-tight">
-                        <p className="font-semibold">{t.author}</p>
-                        <p className="text-white/80 text-[13px]">{t.role}</p>
-                      </div>
+                <div
+                  className="mt-5 rounded-[28px] border border-white/10 bg-white/10 p-5 backdrop-blur-xl"
+                  onMouseEnter={() => setPaused(true)}
+                  onMouseLeave={() => setPaused(false)}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100">Customer voice</p>
+                  <p className="mt-4 text-base leading-7 text-white/95">{testimonials[active].quote}</p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <Image
+                      src={testimonials[active].avatar}
+                      alt={testimonials[active].author}
+                      width={44}
+                      height={44}
+                      className="h-11 w-11 rounded-full border-2 border-cyan-300/70 object-cover"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold">{testimonials[active].author}</p>
+                      <p className="text-sm text-slate-300">{testimonials[active].role}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Pager */}
-              <div className="mt-6 flex items-center justify-end gap-2">
-                {testimonials.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setIndex(i)}
-                    className={[
-                      "h-1.5 rounded-full transition-all",
-                      i === index ? "w-6 bg-white" : "w-1.5 bg-white/60",
-                    ].join(" ")}
-                    aria-label={`Go to testimonial ${i + 1}`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Ratings row with PNGs */}
-            <div className="mt-7 sm:mt-9">
-              <div className="relative mx-auto max-w-[520px]">
-                <p className="text-center text-[12px] tracking-widest text-white/90">
-                  RATED BY THE BEST
-                </p>
-                <div className="absolute left-0 right-0 top-1/2 -z-10 h-px bg-white/20" />
-              </div>
-
-              <RatingsRow />
-            </div>
-          </div>
-        </aside>
-
-        {/* RIGHT: Registration form */}
-        <div className="p-6 sm:p-8 md:p-10">
-          {/* Brand */}
-          <div className="flex items-center gap-2">
-            <Image
-              src="/images/logo.png"
-              alt="Robo Books logo"
-              width={30} // reduced from 38
-              height={30} // reduced from 38
-              className="h-7 w-auto object-contain" // h-7 matches 28–30px size
-              priority
-            />
-            <span className="font-semibold tracking-tight text-lg">
-              Robo Books
-            </span>
-          </div>
-
-          <h1 className="mt-6 text-[28px] font-semibold leading-7 tracking-tight">
-            Create your account
-          </h1>
-          <p className="text-slate-500">
-            Start your 14-day free trial. No credit card required.
-          </p>
-
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
-            {/* Company */}
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                Company name
-              </span>
-              <div className="relative">
-                <input
-                  id="companyName"
-                  value={form.companyName}
-                  onChange={onChange("companyName")}
-                  placeholder="e.g., Robo Innovations Pvt Ltd"
-                  className="peer w-full rounded-2xl border border-slate-300/80 bg-white/70 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20"
-                  disabled={loading}
-                />
-                <div className="pointer-events-none absolute inset-0 rounded-2xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,.6)]" />
-              </div>
-            </label>
-
-            {/* Email */}
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                Email address
-              </span>
-              <div className="relative">
-                <input
-                  id="email"
-                  type="email"
-                  value={form.email}
-                  onChange={onChange("email")}
-                  placeholder="you@company.com"
-                  className="peer w-full rounded-2xl border border-slate-300/80 bg-white/70 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20"
-                  disabled={loading}
-                />
-                <div className="pointer-events-none absolute inset-0 rounded-2xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,.6)]" />
-              </div>
-            </label>
-
-            {/* Phone (country code + number in one group) */}
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                Mobile number
-              </span>
-              <div className="rounded-2xl border border-slate-300/80 bg-white/70 transition focus-within:border-emerald-400 focus-within:ring-4 focus-within:ring-emerald-500/20">
-                <div className="flex items-stretch">
-                  <div className="relative">
-                    <span className="sr-only">Country code</span>
-                    <select
-                      aria-label="Country code"
-                      value={`${form.phoneDialCode}|${form.phoneIso2}`}
-                      onChange={onPhoneCountryChange}
-                      className={[
-                        "min-w-[110px] sm:min-w-[150px]",
-                        "h-full rounded-l-2xl bg-transparent",
-                        "px-3 py-3 pr-8",
-                        "text-slate-900 outline-none",
-                        "border-0 focus:ring-0 appearance-none cursor-pointer",
-                      ].join(" ")}
-                      disabled={loading}
-                    >
-                      <optgroup label="Popular">
-                        {["IN|+91", "US|+1", "GB|+44", "AU|+61", "AE|+971"].map(
-                          (k) => {
-                            const [iso2, dial] = k.split("|");
-                            return (
-                              <option
-                                key={`popular-${k}`}
-                                value={`${dial}|${iso2}`}
-                              >
-                                {shortLabel(iso2, dial)}
-                              </option>
-                            );
-                          }
-                        )}
-                      </optgroup>
-                      <optgroup label="All countries (A–Z)">
-                        {ALL_PHONE_OPTIONS.map((o) => (
-                          <option
-                            key={`${o.iso2}-${o.dial}`}
-                            value={`${o.dial}|${o.iso2}`}
-                            title={o.name}
-                          >
-                            {shortLabel(o.iso2, o.dial)}
-                          </option>
-                        ))}
-                      </optgroup>
-                    </select>
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 h-6 w-px bg-slate-200/80"
-                    />
+                  <div className="mt-4 flex justify-end gap-2">
+                    {testimonials.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setActive(i)}
+                        className={`h-1.5 rounded-full transition-all ${i === active ? "w-8 bg-white" : "w-2 bg-white/50"}`}
+                        aria-label={`Go to testimonial ${i + 1}`}
+                      />
+                    ))}
                   </div>
+                </div>
 
-                  <input
-                    aria-label="Mobile number"
-                    value={form.phoneNumber}
-                    onChange={onChange("phoneNumber")}
-                    placeholder="98765 43210"
-                    className="flex-1 rounded-r-2xl bg-transparent px-4 py-3 text-slate-900 outline-none border-0 focus:ring-0"
-                    disabled={loading}
-                  />
+              </div>
+            </aside>
+
+            <div className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fcff_100%)] px-6 py-7 sm:px-7 lg:px-9 lg:py-8">
+              <div className="flex items-center gap-3">
+                <Image src="/images/logo.png" alt="Robo Books logo" width={42} height={42} className="h-10 w-auto object-contain" />
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#0aa6c9]">RoboBooks</p>
+                  <p className="text-sm text-slate-500">Smart finance setup for modern teams</p>
                 </div>
               </div>
-              <p className="mt-1 text-xs text-slate-500">
-                {flagEmoji(form.phoneIso2)} {form.phoneIso2} •{" "}
-                {form.phoneDialCode}
-              </p>
-            </label>
 
-            {/* Password */}
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                Password
-              </span>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={form.passwordVisible ? "text" : "password"}
-                  value={form.password}
-                  onChange={onChange("password")}
-                  placeholder="At least 6 characters"
-                  className="peer w-full rounded-2xl border border-slate-300/80 bg-white/70 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20"
-                  disabled={loading}
-                />
-                <div className="pointer-events-none absolute inset-0 rounded-2xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,.6)]" />
-                <button
-                  type="button"
-                  aria-label="Toggle password visibility"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() =>
-                    setForm((prev) => ({
-                      ...prev,
-                      passwordVisible: !prev.passwordVisible,
-                    }))
-                  }
-                >
-                  {form.passwordVisible ? (
-                    <EyeSlashIcon className="h-5 w-5 text-slate-500" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5 text-slate-500" />
+              <div className="mt-5 rounded-[28px] border border-[#d9eef5] bg-white p-5 shadow-[0_24px_60px_rgba(15,35,68,0.08)] sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-[2rem] font-bold tracking-tight text-[#0f2344]">Create your account</h3>
+                    <p className="mt-1.5 text-[15px] leading-7 text-slate-600">
+                      Start your 14-day free trial with a cleaner and more branded onboarding experience.
+                    </p>
+                  </div>
+                  <span className="hidden rounded-2xl bg-[#eaf9fc] p-3 text-[#0aa6c9] sm:inline-flex">
+                    <ShieldCheck size={24} />
+                  </span>
+                </div>
+
+                <form onSubmit={onSubmit} className="mt-6 space-y-4">
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold text-[#1d3354]">Company name</span>
+                    <input
+                      value={form.companyName}
+                      onChange={onChange("companyName")}
+                      placeholder="e.g. Robo Innovations Pvt Ltd"
+                      className="w-full rounded-2xl border border-[#d7e7f0] bg-white px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#0aa6c9] focus:ring-4 focus:ring-[#0aa6c9]/15"
+                      disabled={loading}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold text-[#1d3354]">Email address</span>
+                    <input
+                      type="email"
+                      value={form.email}
+                      onChange={onChange("email")}
+                      placeholder="you@company.com"
+                      className="w-full rounded-2xl border border-[#d7e7f0] bg-white px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#0aa6c9] focus:ring-4 focus:ring-[#0aa6c9]/15"
+                      disabled={loading}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold text-[#1d3354]">Mobile number</span>
+                    <div className="rounded-2xl border border-[#d7e7f0] bg-white transition focus-within:border-[#0aa6c9] focus-within:ring-4 focus-within:ring-[#0aa6c9]/15">
+                      <div className="flex items-stretch">
+                        <div className="relative">
+                          <select
+                            aria-label="Country code"
+                            value={`${form.phoneDialCode}|${form.phoneIso2}`}
+                            onChange={onPhoneCountryChange}
+                            className="min-w-[120px] appearance-none rounded-l-2xl border-0 bg-transparent px-3 py-3.5 pr-8 text-slate-900 outline-none sm:min-w-[155px]"
+                            disabled={loading}
+                          >
+                            <optgroup label="Popular">
+                              {["IN|+91", "US|+1", "GB|+44", "AU|+61", "AE|+971"].map((item) => {
+                                const [iso2, dial] = item.split("|");
+                                return (
+                                  <option key={item} value={`${dial}|${iso2}`}>
+                                    {shortLabel(iso2, dial)}
+                                  </option>
+                                );
+                              })}
+                            </optgroup>
+                            <optgroup label="All countries (A-Z)">
+                              {ALL_PHONE_OPTIONS.map((option) => (
+                                <option key={`${option.iso2}-${option.dial}`} value={`${option.dial}|${option.iso2}`}>
+                                  {shortLabel(option.iso2, option.dial)}
+                                </option>
+                              ))}
+                            </optgroup>
+                          </select>
+                          <span className="pointer-events-none absolute right-0 top-1/2 h-7 w-px -translate-y-1/2 bg-[#d7e7f0]" />
+                        </div>
+                        <input
+                          value={form.phoneNumber}
+                          onChange={onChange("phoneNumber")}
+                          placeholder="98765 43210"
+                          className="flex-1 rounded-r-2xl border-0 bg-transparent px-4 py-3.5 text-slate-900 outline-none"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs font-medium text-slate-500">
+                      {flagEmoji(form.phoneIso2)} {form.phoneIso2} | {form.phoneDialCode}
+                    </p>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold text-[#1d3354]">Password</span>
+                    <div className="relative">
+                      <input
+                        type={form.passwordVisible ? "text" : "password"}
+                        value={form.password}
+                        onChange={onChange("password")}
+                        placeholder="At least 6 characters"
+                        className="w-full rounded-2xl border border-[#d7e7f0] bg-white px-4 py-3.5 pr-12 text-slate-900 outline-none transition focus:border-[#0aa6c9] focus:ring-4 focus:ring-[#0aa6c9]/15"
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        aria-label="Toggle password visibility"
+                        className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500"
+                        onClick={() => setForm((prev) => ({ ...prev, passwordVisible: !prev.passwordVisible }))}
+                      >
+                        {form.passwordVisible ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                      </button>
+                    </div>
+                  </label>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-[#1d3354]">Country</span>
+                      <select
+                        value={form.country}
+                        onChange={onChange("country")}
+                        className="w-full rounded-2xl border border-[#d7e7f0] bg-white px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#0aa6c9] focus:ring-4 focus:ring-[#0aa6c9]/15"
+                        disabled={loading}
+                      >
+                        <option>India</option>
+                        <option>United States</option>
+                        <option>United Kingdom</option>
+                        <option>Australia</option>
+                        <option>United Arab Emirates</option>
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-[#1d3354]">State</span>
+                      <select
+                        value={form.state}
+                        onChange={onChange("state")}
+                        className="w-full rounded-2xl border border-[#d7e7f0] bg-white px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#0aa6c9] focus:ring-4 focus:ring-[#0aa6c9]/15"
+                        disabled={loading}
+                      >
+                        {states.map((state) => (
+                          <option key={state} value={state}>
+                            {state}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  {error && (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+                      <p className="text-sm font-medium text-red-600">{error}</p>
+                    </div>
                   )}
-                </button>
+
+                  <label className="flex items-start gap-3 rounded-2xl border border-[#d9eef5] bg-[#f8fdff] px-4 py-3 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={form.agree}
+                      onChange={onChange("agree")}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#0aa6c9] focus:ring-[#0aa6c9]"
+                      disabled={loading}
+                    />
+                    <span>
+                      I agree to the <Link href="/legal/terms" className="font-semibold text-[#007fb4] hover:underline">Terms of Service</Link> and{" "}
+                      <Link href="/legal/privacy" className="font-semibold text-[#007fb4] hover:underline">Privacy Policy</Link>.
+                    </span>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0aa6c9] via-[#0088c5] to-[#0f6ead] px-5 py-4 text-base font-semibold text-white shadow-[0_18px_40px_rgba(0,136,197,0.28)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span>{loading ? "Creating your account..." : "Create my account"}</span>
+                    <ArrowRight size={18} />
+                  </button>
+
+                  <div className="flex flex-col gap-3 border-t border-[#e6f0f5] pt-5 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-slate-500">No credit card required</p>
+                    <p className="text-slate-600">
+                      Already have an account?{" "}
+                      <Link href="/signin" className="font-semibold text-[#007fb4] hover:underline">Sign in</Link>
+                    </p>
+                  </div>
+                </form>
               </div>
-            </label>
 
-            {/* Country & State */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">
-                  Country
-                </span>
-                <select
-                  id="country"
-                  value={form.country}
-                  onChange={onChange("country")}
-                  className="w-full rounded-2xl border border-slate-300/80 bg-white/70 px-3 py-3 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20"
-                  disabled={loading}
-                >
-                  <option>India</option>
-                  <option>United States</option>
-                  <option>United Kingdom</option>
-                  <option>Australia</option>
-                  <option>United Arab Emirates</option>
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">
-                  State
-                </span>
-                <select
-                  id="state"
-                  value={form.state}
-                  onChange={onChange("state")}
-                  className="w-full rounded-2xl border border-slate-300/80 bg-white/70 px-3 py-3 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/20"
-                  disabled={loading}
-                >
-                  {[
-                    "Andhra Pradesh",
-                    "Arunachal Pradesh",
-                    "Assam",
-                    "Bihar",
-                    "Chhattisgarh",
-                    "Goa",
-                    "Gujarat",
-                    "Haryana",
-                    "Himachal Pradesh",
-                    "Jharkhand",
-                    "Karnataka",
-                    "Kerala",
-                    "Madhya Pradesh",
-                    "Maharashtra",
-                    "Manipur",
-                    "Meghalaya",
-                    "Mizoram",
-                    "Nagaland",
-                    "Odisha",
-                    "Punjab",
-                    "Rajasthan",
-                    "Sikkim",
-                    "Tamil Nadu",
-                    "Telangana",
-                    "Tripura",
-                    "Uttar Pradesh",
-                    "Uttarakhand",
-                    "West Bengal",
-                    "Delhi",
-                    "Jammu and Kashmir",
-                    "Ladakh",
-                  ].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </div>
-
-            {/* Error message */}
-            {error && (
-              <div className="rounded-xl bg-red-50 border border-red-200 p-3">
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            )}
-
-            {/* Consent */}
-            <label className="flex items-start gap-3 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={form.agree}
-                onChange={onChange("agree")}
-                className="mt-0.5 size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                disabled={loading}
-              />
-              <span>
-                I agree to the{" "}
-                <Link
-                  href="/legal/terms"
-                  className="text-blue-700 hover:underline"
-                >
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link
-                  href="/legal/privacy"
-                  className="text-blue-700 hover:underline"
-                >
-                  Privacy Policy
-                </Link>
-                .
-              </span>
-            </label>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className={[
-                "group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden",
-                "rounded-2xl px-4 py-3 font-semibold text-white shadow-lg",
-                "bg-gradient-to-tr from-blue-600 to-emerald-500",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-              ].join(" ")}
-            >
-              <span
-                className="absolute inset-0 opacity-30"
-                style={{
-                  maskImage:
-                    "linear-gradient(90deg, transparent, black, transparent)",
-                }}
-              >
-                <span className="absolute -left-6 top-0 h-full w-16 bg-white/70 blur-lg animate-[shine_2.2s_ease-in-out_infinite]" />
-              </span>
-              <span>
-                {loading ? "Creating your account..." : "Create my account"}
-              </span>
-              <ArrowRightIcon className="size-4" />
-            </button>
-
-            <p className="mt-1 text-[12px] text-slate-500">
-              *No credit card required
-            </p>
-          </form>
-
-          {/* Social sign up — Google only */}
-          <div className="mt-5 sm:mt-6">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="h-px flex-1 bg-slate-300" />
-              <span className="text-xs text-slate-500">or</span>
-              <span className="h-px flex-1 bg-slate-300" />
-            </div>
-            {/* <button
-                type="button"
-                onClick={handleGoogleAuth}
-                disabled={loading}
-                className={[
-                  "flex w-full items-center justify-center gap-3 overflow-hidden",
-                  "rounded-2xl px-4 py-4 font-semibold text-slate-700 shadow-lg border-2 border-slate-200",
-                  "bg-white hover:bg-slate-50 hover:border-slate-300 hover:shadow-xl",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                  "transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]",
-                ].join(" ")}
-              >
-                <GoogleMark className="h-6 w-6 flex-shrink-0" />
-                <span className="text-base">
-                  {loading ? "Signing up with Google..." : "Continue with Google"}
-                </span>
-              </button> */}
           </div>
-
-          {/* Login link */}
-          <p className="mt-6 text-sm text-slate-600">
-            Already have a Robo Books account${" "}
-            <a
-              className="font-semibold text-blue-700 hover:underline"
-              href="/signin"
-            >
-              Sign in
-            </a>
-          </p>
-        </div>
+        </section>
       </section>
-
-      {/* Google OAuth script removed - using simple redirect flow */}
-
-      <style jsx>{`
-        @keyframes shine {
-          0% {
-            transform: translateX(-20%);
-          }
-          100% {
-            transform: translateX(120%);
-          }
-        }
-      `}</style>
     </main>
   );
 }

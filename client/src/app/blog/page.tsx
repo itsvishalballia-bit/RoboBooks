@@ -37,7 +37,7 @@ const BlogPage = () => {
               Latest Articles
             </p>
             <h2 className="mt-4 text-4xl font-bold leading-tight text-[#0f2344] sm:text-5xl">
-              Compact cards for a cleaner blog layout
+              Practical accounting insights for smarter business decisions
             </h2>
           </div>
 
