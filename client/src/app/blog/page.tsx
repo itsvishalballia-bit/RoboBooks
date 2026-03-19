@@ -19,6 +19,8 @@ const BlogPage = () => {
         description="Explore practical ideas around invoicing, bookkeeping, reporting, finance operations, and how modern SaaS tools can reduce accounting friction."
         primaryAction={{ href: '#blog-posts', label: 'Read latest posts' }}
         secondaryAction={{ href: '/register', label: 'Try RoboBooks' }}
+        variant="banner"
+        breadcrumbLabel="Blog"
         stats={[
           { value: '4+', label: 'Latest articles' },
           { value: '100%', label: 'Practical insights' },
@@ -27,7 +29,7 @@ const BlogPage = () => {
         ]}
       />
 
-      <section id="blog-posts" className="relative overflow-hidden bg-[#f8fbff] py-16 lg:py-20">
+      <section id="blog-posts" className="relative overflow-hidden bg-[#f8fbff] pb-16 pt-12 lg:pb-20 lg:pt-14">
         <div className="absolute left-[-6rem] top-10 h-72 w-72 rounded-full bg-[#0aa6c9]/10 blur-3xl" />
         <div className="absolute right-[-8rem] bottom-0 h-72 w-72 rounded-full bg-[#0f2344]/8 blur-3xl" />
 

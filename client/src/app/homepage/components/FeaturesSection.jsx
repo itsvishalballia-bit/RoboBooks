@@ -59,7 +59,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section className="relative overflow-hidden bg-white pb-8 pt-16 lg:pb-10 lg:pt-20">
+    <section className="relative overflow-hidden bg-white pb-8 pt-12 lg:pb-10 lg:pt-14">
       <div className="absolute inset-0">
         <div className="absolute left-[10%] top-24 h-56 w-56 rounded-full bg-[#0aa6c9]/8 blur-3xl" />
         <div className="absolute right-[8%] bottom-10 h-64 w-64 rounded-full bg-[#0f2344]/7 blur-3xl" />

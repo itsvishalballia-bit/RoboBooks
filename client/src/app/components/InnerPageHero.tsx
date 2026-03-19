@@ -28,6 +28,8 @@ type Props = {
   primaryAction: Action;
   secondaryAction?: Action;
   stats?: Stat[];
+  variant?: 'default' | 'banner';
+  breadcrumbLabel?: string;
 };
 
 export default function InnerPageHero({
@@ -37,7 +39,61 @@ export default function InnerPageHero({
   primaryAction,
   secondaryAction,
   stats = [],
+  variant = 'default',
+  breadcrumbLabel,
 }: Props) {
+  if (variant === 'banner') {
+    return (
+      <section className="relative overflow-hidden bg-white pt-22 lg:pt-24">
+        <div className="w-full px-0 pb-2">
+          <div className="relative overflow-hidden bg-[#172c53] px-6 py-4 text-white shadow-[0_18px_45px_rgba(10,27,58,0.18)] sm:px-10 sm:py-5 lg:px-16">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-100"
+              style={{
+                background:
+                  'linear-gradient(90deg, #13284d 0%, #18345f 24%, #0aa6c9 50%, #18345f 76%, #13284d 100%)',
+                backgroundSize: '200% 200%',
+                animation: 'bannerGradientFlow 8s ease-in-out infinite',
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-0 opacity-100"
+              style={{
+                background:
+                  'linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.015) 45%, rgba(10,166,201,0.04) 100%)',
+              }}
+            />
+
+            <div className="relative mx-auto w-full max-w-7xl">
+              <p className="text-[clamp(1.75rem,2.5vw,2.8rem)] font-bold leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">
+                {breadcrumbLabel ?? title}
+              </p>
+              <p className="mt-2 text-base font-semibold text-white/95 sm:text-lg">
+                <Link href="/" className="transition hover:text-white">
+                  Home
+                </Link>{' '}
+                // {breadcrumbLabel ?? title}
+              </p>
+            </div>
+          </div>
+        </div>
+        <style jsx>{`
+          @keyframes bannerGradientFlow {
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
+          }
+        `}</style>
+      </section>
+    );
+  }
+
   return (
     <section className="relative overflow-hidden bg-[#0f2344] pt-28 text-white lg:pt-32">
       <div

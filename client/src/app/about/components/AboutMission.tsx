@@ -13,7 +13,7 @@ export default function AboutMission() {
   return (
     <section
       id="mission"
-      className="relative overflow-hidden bg-white py-16 scroll-mt-24 lg:py-20"
+      className="relative overflow-hidden bg-white pb-16 pt-10 scroll-mt-24 lg:pb-20 lg:pt-12"
     >
       <div className="absolute inset-y-0 right-0 hidden w-[34%] bg-[#f8fbff] lg:block" />
       <div className="absolute left-10 top-20 hidden h-40 w-40 rounded-full border border-[#0aa6c9]/10 lg:block" />
