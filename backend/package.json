@@ -5,7 +5,8 @@
   "scripts": {
     "start": "nodemon server.js",
     "setup": "node setup.js",
-    "test": "node test-auth.js"
+    "test": "node test-auth.js",
+    "seed:login-user": "node scripts/seedLoginUser.js"
   },
   "dependencies": {
     "axios": "^1.12.2",

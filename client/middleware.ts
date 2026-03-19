@@ -17,16 +17,6 @@ export function middleware(request: NextRequest) {
   // Check for authentication cookies
   const hasAuthCookie = request.cookies.has('rb_session')
   
-  // If user is on login pages and has auth cookie, redirect to dashboard
-  if ((pathname === '/signin' || pathname === '/admin/login') && hasAuthCookie) {
-    console.log('🔐 User has auth cookie on login page, redirecting to dashboard')
-    if (pathname === '/admin/login') {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
-    } else {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-  }
-
   // If user is on dashboard/admin pages and has no auth cookie, redirect to login
   if ((pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) && !hasAuthCookie) {
     console.log('🔐 User has no auth cookie on protected page, redirecting to login')
