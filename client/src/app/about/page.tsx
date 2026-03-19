@@ -20,6 +20,8 @@ const AboutPage = () => {
         description="We build RoboBooks for companies that need smart invoicing, cleaner bookkeeping, dependable compliance workflows, and a product experience that feels modern from the first click."
         primaryAction={{ href: '#mission', label: 'Explore our mission' }}
         secondaryAction={{ href: '#team-section', label: 'Meet the team' }}
+        variant="banner"
+        breadcrumbLabel="About"
         stats={[
           { value: '10K+', label: 'Businesses served' },
           { value: '99.9%', label: 'Platform uptime' },

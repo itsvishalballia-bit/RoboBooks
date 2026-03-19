@@ -18,6 +18,8 @@ const ServicesPage = () => {
         description="From GST invoicing to books, reporting, reconciliations, and operational finance visibility, RoboBooks is designed to help teams move faster with less friction."
         primaryAction={{ href: '/register', label: 'Start free trial' }}
         secondaryAction={{ href: '/contact', label: 'Schedule demo' }}
+        variant="banner"
+        breadcrumbLabel="Service"
         stats={[
           { value: '6+', label: 'Core modules' },
           { value: '500+', label: 'Active teams' },

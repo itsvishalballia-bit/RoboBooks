@@ -47,12 +47,12 @@ const services = [
 
 export default function ServicesSection() {
   return (
-    <section className="relative overflow-hidden bg-[#f7fbff] py-16 lg:py-20">
+    <section className="relative overflow-hidden bg-[#f7fbff] pb-16 pt-12 lg:pb-20 lg:pt-14">
       <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white to-transparent" />
       <div className="absolute right-[-10rem] top-10 h-72 w-72 rounded-full bg-[#0aa6c9]/10 blur-3xl" />
       <div className="absolute bottom-0 left-[-8rem] h-80 w-80 rounded-full bg-[#0f2344]/8 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-4 md:px-8 lg:px-20">
+      <div className="relative mx-auto max-w-[1600px] px-4 md:px-8 lg:px-10">
         <div className="mb-14 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.34em] text-[#0aa6c9]">

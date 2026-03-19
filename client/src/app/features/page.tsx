@@ -19,6 +19,8 @@ const FeaturesPage = () => {
         description="RoboBooks brings billing, bookkeeping, reconciliation, analytics, and collaboration into one interface so finance work feels connected instead of fragmented."
         primaryAction={{ href: '#feature-grid', label: 'Explore features' }}
         secondaryAction={{ href: '/contact', label: 'Book a walkthrough' }}
+        variant="banner"
+        breadcrumbLabel="Features"
         stats={[
           { value: '8+', label: 'Core capabilities' },
           { value: '1', label: 'Unified workspace' },

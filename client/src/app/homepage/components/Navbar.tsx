@@ -39,7 +39,7 @@ const Navbar: React.FC = () => {
           />
         </div>
 
-        <div className="relative mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-10 lg:pl-[340px]">
+        <div className="relative mx-auto flex max-w-[1500px] items-center justify-between px-4 py-3 lg:px-8 lg:pl-[340px]">
           {/* Brand */}
           <Link
             href="/"
@@ -67,7 +67,7 @@ const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-8 text-[15px] font-semibold text-[#122241]">
+          <div className="hidden lg:flex items-center gap-9 text-[15px] font-semibold text-[#122241]">
             {links.map(({ href, label }) => (
               <Link
                 key={href}
@@ -82,14 +82,14 @@ const Navbar: React.FC = () => {
           {/* Right side */}
           <div className="flex items-center gap-5">
             <button
-              className="hidden h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-slate-300 hover:shadow md:inline-flex"
+              className="hidden h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-slate-300 hover:shadow md:inline-flex"
               aria-label="Search"
             >
               <Search size={18} />
             </button>
 
-            <div className="hidden items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2.5 shadow-sm md:flex">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0088c5] text-white shadow-md">
+            <div className="hidden items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm md:flex">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0088c5] text-white shadow-md">
                 <PhoneCall size={18} />
               </span>
               <div className="text-left leading-tight">
@@ -100,7 +100,7 @@ const Navbar: React.FC = () => {
 
             <Link
               href="/register"
-              className="hidden items-center gap-2 rounded-full bg-[#0088c5] px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#006b9c] md:inline-flex"
+              className="hidden items-center gap-2 rounded-full bg-[#0088c5] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#006b9c] md:inline-flex"
             >
               Register <ArrowRight size={16} />
             </Link>
