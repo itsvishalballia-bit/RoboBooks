@@ -72,10 +72,10 @@ export default function AboutMission() {
           </div>
           <div className="absolute bottom-0 right-10 h-[220px] w-[62%] overflow-hidden rounded-[26px] border-[10px] border-white bg-white shadow-[0_22px_45px_rgba(15,35,68,0.14)]">
             <Image
-              src="/images/usability.png"
+              src="/images/dashboard.png"
               alt="RoboBooks product mission support"
               fill
-              className="object-cover"
+              className="object-contain object-center"
               sizes="(max-width: 1024px) 100vw, 320px"
             />
           </div>

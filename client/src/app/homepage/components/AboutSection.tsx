@@ -47,10 +47,10 @@ export default function AboutSection() {
 
             <div className="absolute bottom-0 right-6 h-[240px] w-[66%] overflow-hidden rounded-[28px] border-[10px] border-white bg-white shadow-[0_22px_45px_rgba(15,35,68,0.14)]">
               <Image
-                src="/images/usability.png"
+                src="/images/dashboard.png"
                 alt="RoboBooks workflow for bookkeeping teams"
                 fill
-                className="object-cover"
+                className="object-contain object-center"
                 sizes="(max-width: 1024px) 100vw, 360px"
               />
             </div>

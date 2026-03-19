@@ -245,8 +245,8 @@ export default function SignIn() {
 
                   <div className="rounded-2xl border border-[#d7ebff] bg-[#f4f9ff] px-4 py-3">
                     <p className="text-sm font-semibold text-[#0f4d63]">Test credentials</p>
-                    <p className="mt-1 text-sm text-[#35627d]">Email: test@example.com</p>
-                    <p className="text-sm text-[#35627d]">Password: password123</p>
+                    <p className="mt-1 text-sm text-[#35627d]">Email: demo@robobooks.com</p>
+                    <p className="text-sm text-[#35627d]">Password: Demo@12345</p>
                   </div>
 
                   <div className="flex flex-col gap-3 border-t border-[#e6f0f5] pt-5 text-sm sm:flex-row sm:items-center sm:justify-between">
