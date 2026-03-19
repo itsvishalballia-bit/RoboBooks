@@ -71,7 +71,7 @@ const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-9 text-[15px] font-semibold text-[#122241]">
+          <div className="hidden lg:absolute lg:left-[52%] lg:flex lg:-translate-x-1/2 lg:items-center lg:gap-9 text-[15px] font-semibold text-[#122241]">
             {links.map(({ href, label }) => (
               <Link
                 key={href}
@@ -88,7 +88,7 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-5">
+          <div className="ml-auto flex items-center gap-5">
             <button
               className="hidden h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-slate-300 hover:shadow md:inline-flex"
               aria-label="Search"
