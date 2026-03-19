@@ -9,6 +9,16 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const router = express.Router();
+const DEMO_USER = {
+  companyName: "RoboBooks Demo Workspace",
+  email: "demo@robobooks.com",
+  phone: "9999999999",
+  phoneDialCode: "+91",
+  phoneIso2: "IN",
+  password: "Demo@12345",
+  country: "India",
+  state: "Karnataka",
+};
 
 // helper – issue http-only cookie
 function issueCookie(res, token) {
@@ -49,6 +59,51 @@ function validatePhone(phone) {
   // Remove all non-digit characters and check length
   const cleanPhone = phone.replace(/\D/g, "");
   return cleanPhone.length >= 10 && cleanPhone.length <= 15;
+}
+
+async function ensureDemoUser(emailOrPhone, password) {
+  const normalized = emailOrPhone?.trim().toLowerCase();
+  const demoMatches =
+    password === DEMO_USER.password &&
+    (normalized === DEMO_USER.email || emailOrPhone?.trim() === DEMO_USER.phone);
+
+  if (!demoMatches) {
+    return null;
+  }
+
+  let user = await User.findOne({ email: DEMO_USER.email });
+  if (user) {
+    if (!user.passwordHash) {
+      user.passwordHash = await bcrypt.hash(DEMO_USER.password, 12);
+    }
+    user.companyName = user.companyName || DEMO_USER.companyName;
+    user.phone = user.phone || DEMO_USER.phone;
+    user.phoneDialCode = user.phoneDialCode || DEMO_USER.phoneDialCode;
+    user.phoneIso2 = user.phoneIso2 || DEMO_USER.phoneIso2;
+    user.country = user.country || DEMO_USER.country;
+    user.state = user.state || DEMO_USER.state;
+    user.isActive = true;
+    user.approvalStatus = "approved";
+    await user.save();
+    return user;
+  }
+
+  const passwordHash = await bcrypt.hash(DEMO_USER.password, 12);
+  user = await User.create({
+    companyName: DEMO_USER.companyName,
+    email: DEMO_USER.email,
+    phone: DEMO_USER.phone,
+    phoneDialCode: DEMO_USER.phoneDialCode,
+    phoneIso2: DEMO_USER.phoneIso2,
+    passwordHash,
+    country: DEMO_USER.country,
+    state: DEMO_USER.state,
+    isActive: true,
+    approvalStatus: "approved",
+    approvedAt: new Date(),
+  });
+
+  return user;
 }
 
 // AUTH STATUS - Check if user is authenticated
@@ -234,7 +289,8 @@ router.post("/login", async (req, res, next) => {
       ? { email: emailOrPhone.toLowerCase() }
       : { phone: emailOrPhone };
 
-    const user = await User.findOne(query);
+    const demoUser = await ensureDemoUser(emailOrPhone, password);
+    const user = demoUser || (await User.findOne(query));
 
     // DEBUG LOGGING
     console.log("🔍 DEBUG LOGIN - User found:", {
