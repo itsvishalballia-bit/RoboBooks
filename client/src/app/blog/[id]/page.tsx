@@ -70,8 +70,8 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 </p>
               </div>
 
-              <div className="rounded-[34px] border border-[#d8e7f1] bg-white p-4 shadow-[0_22px_60px_rgba(15,35,68,0.08)] sm:p-5">
-                <div className="relative flex h-[260px] items-center justify-center overflow-hidden rounded-[28px] bg-[#eef4f8] sm:h-[360px]">
+              <div className="overflow-hidden rounded-[34px] border border-[#d8e7f1] bg-white shadow-[0_22px_60px_rgba(15,35,68,0.08)]">
+                <div className="relative aspect-[3/2] max-h-[240px] w-full overflow-hidden bg-[#eef4f8] sm:max-h-[300px] lg:max-h-[340px]">
                   <Image
                     src={post.image}
                     alt={post.title}
@@ -81,7 +81,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                   />
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 p-4 sm:p-5">
                   <span className="inline-flex items-center gap-2 rounded-full border border-[#d8e7f1] bg-[#f8fbff] px-4 py-2 text-sm font-semibold text-[#0f2344]">
                     <CalendarDays size={15} />
                     {post.date}

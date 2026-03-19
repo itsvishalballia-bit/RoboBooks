@@ -60,6 +60,27 @@ npm start
 
 The server will start on `http://localhost:5000`
 
+### Seed A Login User
+
+Live ya fresh database me login user banane ke liye ye env vars set karke script run karein:
+
+```env
+SEED_LOGIN_EMAIL=your-login-email@example.com
+SEED_LOGIN_PASSWORD=your-strong-password
+SEED_LOGIN_COMPANY_NAME=RoboBooks Workspace
+SEED_LOGIN_PHONE=9999999999
+SEED_LOGIN_PHONE_DIAL_CODE=+91
+SEED_LOGIN_PHONE_ISO2=IN
+SEED_LOGIN_COUNTRY=India
+SEED_LOGIN_STATE=Uttar Pradesh
+```
+
+```bash
+npm run seed:login-user
+```
+
+Ye script user ko `approved` aur `active` state me upsert karti hai, isliye seed ke baad wahi credentials se login ho jayega.
+
 ## API Endpoints
 
 ### Authentication
