@@ -125,6 +125,7 @@ export default function AdminLayout({
       href: "/admin/cms",
       icon: TableCellsIcon,
       children: [
+        { name: "Logo Section", href: "/admin/cms/logo" },
         { name: "Hero Section", href: "/admin/cms/hero" },
         { name: "About Section", href: "/admin/cms/about" },
         { name: "Invoice Themes", href: "/admin/cms/invoice-themes" },
@@ -136,6 +137,10 @@ export default function AdminLayout({
         { name: "Business Impact", href: "/admin/cms/business-impact" },
         { name: "Team Management", href: "/admin/cms/team-management" },
         { name: "FAQ Section", href: "/admin/cms/faq" },
+        { name: "Trusted Partner", href: "/admin/cms/trusted-partner" },
+        { name: "App CTA Section", href: "/admin/cms/pre-footer-cta" },
+        { name: "Contact Section", href: "/admin/cms/contact-section" },
+        { name: "Footer Section", href: "/admin/cms/footer" },
         { name: "Pricing Plans", href: "/admin/cms/pricing-plans" },
         { name: "Testimonials", href: "/admin/cms/testimonials" },
       ],

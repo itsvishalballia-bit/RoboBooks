@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import { industries } from "../app/industries/industryData";
+import { getDefaultFooterPageContent } from "../app/footer/footerData";
 import { gstTools } from "../app/gst-tools/toolData";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
@@ -37,6 +38,47 @@ export type AboutCmsContent = {
   primaryButtonUrl: string;
   trustedLabel: string;
   trustedText: string;
+};
+
+export type LogoCmsContent = {
+  logoUrl: string;
+  altText: string;
+};
+
+export type FooterCmsContent = {
+  brandDescription: string;
+  productTitle: string;
+  companyTitle: string;
+  legalTitle: string;
+  productLinks: Array<{
+    label: string;
+    href: string;
+  }>;
+  companyLinks: Array<{
+    label: string;
+    href: string;
+  }>;
+  legalLinks: Array<{
+    label: string;
+    href: string;
+  }>;
+  copyrightText: string;
+  bottomText: string;
+};
+
+export type FooterPageCmsContent = {
+  slug: string;
+  label: string;
+  category: "product" | "company" | "legal";
+  eyebrow: string;
+  title: string;
+  description: string;
+  summary: string;
+  highlights: string[];
+  cta: {
+    href: string;
+    label: string;
+  };
 };
 
 export type InvoiceThemesCmsContent = {
@@ -187,6 +229,75 @@ export type FaqCmsContent = {
   }>;
 };
 
+export type TrustedMarqueeCmsContent = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  topRow: Array<{
+    label: string;
+    iconKey: string;
+    iconUrl: string;
+    sublabel: string;
+  }>;
+  bottomRow: Array<{
+    label: string;
+    iconKey: string;
+    iconUrl: string;
+    sublabel: string;
+  }>;
+};
+
+export type PreFooterCtaCmsContent = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  primaryButtonLabel: string;
+  primaryButtonUrl: string;
+  secondaryButtonLabel: string;
+  secondaryButtonUrl: string;
+  benefits: string[];
+  downloadLabel: string;
+  playStoreUrl: string;
+  playStoreImageUrl: string;
+  appStoreUrl: string;
+  appStoreImageUrl: string;
+  phoneTitle: string;
+  phoneSubtitle: string;
+  phoneAccentColor: string;
+  dashboardPreviewImageUrl: string;
+  collectedLabel: string;
+  collectedValue: string;
+  collectedMeta: string;
+  invoicesLabel: string;
+  invoicesValue: string;
+  invoicesMeta: string;
+};
+
+export type ContactSectionCmsContent = {
+  leftEyebrow: string;
+  leftTitle: string;
+  leftDescription: string;
+  callLabel: string;
+  callValue: string;
+  callDescription: string;
+  emailLabel: string;
+  emailValue: string;
+  emailDescription: string;
+  formEyebrow: string;
+  formTitle: string;
+  fullNameLabel: string;
+  fullNamePlaceholder: string;
+  emailFieldLabel: string;
+  emailFieldPlaceholder: string;
+  phoneFieldLabel: string;
+  phoneFieldPlaceholder: string;
+  companyFieldLabel: string;
+  companyFieldPlaceholder: string;
+  requirementLabel: string;
+  requirementPlaceholder: string;
+  submitButtonLabel: string;
+};
+
 export type PricingPlansCmsContent = {
   eyebrow: string;
   title: string;
@@ -248,6 +359,49 @@ export const defaultAboutContent: AboutCmsContent = {
   trustedLabel: "Trusted for",
   trustedText: "billing, books, tax, and team operations",
 };
+
+export const defaultLogoContent: LogoCmsContent = {
+  logoUrl: "/images/logo.png",
+  altText: "RoboBooks logo",
+};
+
+export const defaultFooterContent: FooterCmsContent = {
+  brandDescription:
+    "RoboBooks is an accounting SaaS platform for invoicing, bookkeeping, GST workflows, reporting, and operational finance control.",
+  productTitle: "Product",
+  companyTitle: "Company",
+  legalTitle: "Legal",
+  productLinks: [
+    { label: "About RoboBooks", href: "/footer/about-robobooks" },
+    { label: "Book a demo", href: "/footer/book-a-demo" },
+    { label: "Start free trial", href: "/footer/start-free-trial" },
+    { label: "GSTR Filing", href: "/footer/gstr-filing" },
+    { label: "E-Invoicing", href: "/footer/e-invoicing" },
+    { label: "Delivery Challan", href: "/footer/delivery-challan" },
+    { label: "Data Export to Sale", href: "/footer/data-export-to-sale" },
+    { label: "Bank Reconciliation", href: "/footer/bank-reconciliation" },
+    { label: "Import Export of Data", href: "/footer/import-export-of-data" },
+    { label: "Multiple Financial Reporting", href: "/footer/multiple-financial-reporting" },
+  ],
+  companyLinks: [
+    { label: "Company", href: "/footer/company" },
+    { label: "Contact", href: "/footer/contact" },
+    { label: "FAQ", href: "/footer/faq" },
+  ],
+  legalLinks: [
+    { label: "Terms", href: "/footer/terms" },
+    { label: "Privacy", href: "/footer/privacy" },
+    { label: "Cookies", href: "/footer/cookies" },
+  ],
+  copyrightText: "RoboBooks. All rights reserved.",
+  bottomText: "Built for modern accounting workflows and growing businesses.",
+};
+
+export function getDefaultFooterPageCmsContent(
+  slug: string
+): FooterPageCmsContent | null {
+  return getDefaultFooterPageContent(slug);
+}
 
 export const defaultInvoiceThemesContent: InvoiceThemesCmsContent = {
   eyebrow: "Invoice Themes",
@@ -596,6 +750,87 @@ export const defaultFaqContent: FaqCmsContent = {
         "No. RoboBooks is an accounting SaaS platform that goes beyond billing into bookkeeping, bank reconciliation, reporting, inventory-linked workflows, and team operations.",
     },
   ],
+};
+
+export const defaultTrustedMarqueeContent: TrustedMarqueeCmsContent = {
+  eyebrow: "Trusted By Growing Teams And Our Partners",
+  title: "Our Patner",
+  description:
+    "RoboBooks supports billing, finance, inventory, and operations teams across multiple industries with our trusted partners.",
+  topRow: [
+    { label: "Retail", iconKey: "store", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "Manufacturing", iconKey: "factory", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "SaaS", iconKey: "laptop", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "Restaurants", iconKey: "utensils", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "Banking", iconKey: "banknote", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "Healthcare", iconKey: "heart", iconUrl: "", sublabel: "Powered by RoboBooks" },
+  ],
+  bottomRow: [
+    { label: "Wholesale", iconKey: "boxes", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "Compliance", iconKey: "shield", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "Invoicing", iconKey: "receipt", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "Commerce", iconKey: "shopping", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "Enterprises", iconKey: "building", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    { label: "Logistics", iconKey: "truck", iconUrl: "", sublabel: "Powered by RoboBooks" },
+  ],
+};
+
+export const defaultPreFooterCtaContent: PreFooterCtaCmsContent = {
+  eyebrow: "Start with RoboBooks",
+  title: "Start using RoboBooks today",
+  description:
+    "Bring invoicing, GST workflows, payment follow-ups, and accounting visibility together in one clean workspace your whole team can rely on.",
+  primaryButtonLabel: "Start Free Trial",
+  primaryButtonUrl: "/register",
+  secondaryButtonLabel: "Book Demo",
+  secondaryButtonUrl: "/contact",
+  benefits: [
+    "GST-ready invoicing",
+    "Books, banking, and reports in one place",
+    "Built for growing Indian businesses",
+  ],
+  downloadLabel: "Download app on",
+  playStoreUrl: "/register",
+  playStoreImageUrl: "/images/playstore.png",
+  appStoreUrl: "/register",
+  appStoreImageUrl: "/images/appstore.png",
+  phoneTitle: "RoboBooks App",
+  phoneSubtitle: "Collections",
+  phoneAccentColor: "bg-emerald-500",
+  dashboardPreviewImageUrl: "/images/dashboard.png",
+  collectedLabel: "Collected",
+  collectedValue: "Rs. 11.4L",
+  collectedMeta: "This month",
+  invoicesLabel: "Invoices",
+  invoicesValue: "126",
+  invoicesMeta: "Auto-tracked in RoboBooks",
+};
+
+export const defaultContactSectionContent: ContactSectionCmsContent = {
+  leftEyebrow: "Contact Us",
+  leftTitle: "Talk to RoboBooks after exploring the mobile experience",
+  leftDescription:
+    "Share your requirement and our team will help with invoicing, GST billing, payment follow-ups, and the right setup for your business.",
+  callLabel: "Call",
+  callValue: "+91 98765 43210",
+  callDescription: "Demo booking, onboarding, and product guidance.",
+  emailLabel: "Email",
+  emailValue: "hello@robobooks.in",
+  emailDescription: "Send your details and our team will reach out quickly.",
+  formEyebrow: "Request A Callback",
+  formTitle: "Let us get in touch",
+  fullNameLabel: "Full name",
+  fullNamePlaceholder: "Enter your name",
+  emailFieldLabel: "Work email",
+  emailFieldPlaceholder: "you@company.com",
+  phoneFieldLabel: "Phone number",
+  phoneFieldPlaceholder: "+91 98765 43210",
+  companyFieldLabel: "Company name",
+  companyFieldPlaceholder: "Your business name",
+  requirementLabel: "Your requirement",
+  requirementPlaceholder:
+    "Tell us what you want help with: billing, GST, accounting, reports, inventory, or demo setup.",
+  submitButtonLabel: "Submit enquiry",
 };
 
 export const defaultPricingPlansContent: PricingPlansCmsContent = {

@@ -1,39 +1,41 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, Quote } from 'lucide-react';
-
-const testimonials = [
-  {
-    name: 'Rohit Bansal',
-    role: 'Founder, BrightLedger Retail',
-    content:
-      'RoboBooks helped us move away from scattered spreadsheets. Billing, dues, and reporting finally feel connected.',
-    image: '/images/testimonial1.jpg',
-  },
-  {
-    name: 'Neha Kapoor',
-    role: 'Finance Lead, UrbanNest Services',
-    content:
-      'The interface is clean, the workflows are practical, and our month-end reviews take much less effort than before.',
-    image: '/images/testimonial2.jpg',
-  },
-  {
-    name: 'Arjun Mehta',
-    role: 'Director, Mehta Supply Co.',
-    content:
-      'For a growing company, having invoicing, accounting visibility, and team access in one place is a major advantage.',
-    image: '/images/testimonial3.jpg',
-  },
-];
+import {
+  defaultTestimonialsContent,
+  fetchPublicCmsSection,
+  type TestimonialsCmsContent,
+} from '@/services/cmsService';
 
 export default function TestimonialsCarousel() {
+  const [content, setContent] = useState<TestimonialsCmsContent>(
+    defaultTestimonialsContent
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
-  const current = testimonials[currentIndex];
 
-  const next = () => setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-  const prev = () => setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  useEffect(() => {
+    fetchPublicCmsSection<TestimonialsCmsContent>(
+      'testimonials',
+      defaultTestimonialsContent
+    ).then(setContent);
+  }, []);
+
+  const testimonials = content.testimonials;
+  const safeIndex = testimonials.length ? currentIndex % testimonials.length : 0;
+  const current = testimonials[safeIndex];
+
+  const next = () =>
+    setCurrentIndex((prev) => (testimonials.length ? (prev + 1) % testimonials.length : 0));
+  const prev = () =>
+    setCurrentIndex((prev) =>
+      testimonials.length ? (prev - 1 + testimonials.length) % testimonials.length : 0
+    );
+
+  if (!current) {
+    return null;
+  }
 
   return (
     <section className="relative overflow-hidden bg-[#0f2344] py-16 text-white lg:py-20">
@@ -43,13 +45,13 @@ export default function TestimonialsCarousel() {
       <div className="relative mx-auto max-w-6xl px-4 md:px-8 lg:px-20">
         <div className="mb-12 text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.34em] text-cyan-200">
-            Testimonials
+            {content.eyebrow}
           </p>
           <h2 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl">
-            Teams trust RoboBooks to keep their accounting calmer
+            {content.title}
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-200">
-            The product is designed to reduce friction across billing, books, reporting, and daily finance collaboration.
+            {content.description}
           </p>
         </div>
 
@@ -88,7 +90,7 @@ export default function TestimonialsCarousel() {
                       key={item.name}
                       onClick={() => setCurrentIndex(index)}
                       className={`h-3 w-10 rounded-full transition ${
-                        index === currentIndex ? 'bg-[#0aa6c9]' : 'bg-white/25'
+                        index === safeIndex ? 'bg-[#0aa6c9]' : 'bg-white/25'
                       }`}
                       aria-label={`Show testimonial ${index + 1}`}
                     />
