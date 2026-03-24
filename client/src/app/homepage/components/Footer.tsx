@@ -2,8 +2,15 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import { gstTools } from '../../gst-tools/toolData';
+import {
+  defaultLogoContent,
+  fetchPublicCmsSection,
+  resolveCmsAssetUrl,
+  type LogoCmsContent,
+} from '@/services/cmsService';
 
 const productLinks = [
   { href: '/about', label: 'About RoboBooks' },
@@ -32,6 +39,11 @@ const legalLinks = [
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const [logo, setLogo] = useState<LogoCmsContent>(defaultLogoContent);
+
+  useEffect(() => {
+    fetchPublicCmsSection<LogoCmsContent>('logo', defaultLogoContent).then(setLogo);
+  }, []);
 
   return (
     <footer className="relative overflow-hidden bg-[#08182e] text-white">
@@ -45,8 +57,8 @@ export default function Footer() {
           <div>
             <Link href="/" className="inline-flex items-center">
               <Image
-                src="/images/logo.png"
-                alt="RoboBooks"
+                src={resolveCmsAssetUrl(logo.logoUrl)}
+                alt={logo.altText}
                 width={176}
                 height={56}
                 className="h-14 w-auto rounded-lg"

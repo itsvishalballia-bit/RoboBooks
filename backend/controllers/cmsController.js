@@ -67,6 +67,10 @@ const CMS_DEFAULTS = {
     trustedLabel: "Trusted for",
     trustedText: "billing, books, tax, and team operations",
   },
+  logo: {
+    logoUrl: "/images/logo.png",
+    altText: "RoboBooks logo",
+  },
   invoiceThemes: {
     eyebrow: "Invoice Themes",
     title: "Your bill, your brand and more with RoboBooks",
@@ -468,6 +472,28 @@ const CMS_DEFAULTS = {
         answer:
           "No. RoboBooks is an accounting SaaS platform that goes beyond billing into bookkeeping, bank reconciliation, reporting, inventory-linked workflows, and team operations.",
       },
+    ],
+  },
+  trustedMarquee: {
+    eyebrow: "Trusted By Growing Teams And Our Partners",
+    title: "Our Patner",
+    description:
+      "RoboBooks supports billing, finance, inventory, and operations teams across multiple industries with our trusted partners.",
+    topRow: [
+      { label: "Retail", iconKey: "store", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "Manufacturing", iconKey: "factory", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "SaaS", iconKey: "laptop", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "Restaurants", iconKey: "utensils", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "Banking", iconKey: "banknote", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "Healthcare", iconKey: "heart", iconUrl: "", sublabel: "Powered by RoboBooks" },
+    ],
+    bottomRow: [
+      { label: "Wholesale", iconKey: "boxes", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "Compliance", iconKey: "shield", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "Invoicing", iconKey: "receipt", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "Commerce", iconKey: "shopping", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "Enterprises", iconKey: "building", iconUrl: "", sublabel: "Powered by RoboBooks" },
+      { label: "Logistics", iconKey: "truck", iconUrl: "", sublabel: "Powered by RoboBooks" },
     ],
   },
   pricingPlans: {

@@ -15,6 +15,16 @@ export default function AdminCmsPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <Link
+          href="/admin/cms/logo"
+          className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:border-purple-300 hover:shadow-md"
+        >
+          <h2 className="text-xl font-semibold text-gray-900">Logo Section</h2>
+          <p className="mt-3 text-gray-600">
+            Upload and manage the main website logo used in the navbar and footer.
+          </p>
+        </Link>
+
+        <Link
           href="/admin/cms/hero"
           className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:border-purple-300 hover:shadow-md"
         >
@@ -121,6 +131,16 @@ export default function AdminCmsPage() {
           <h2 className="text-xl font-semibold text-gray-900">FAQ Section</h2>
           <p className="mt-3 text-gray-600">
             Edit the FAQ heading, intro copy, and expandable question and answer items.
+          </p>
+        </Link>
+
+        <Link
+          href="/admin/cms/trusted-partner"
+          className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:border-purple-300 hover:shadow-md"
+        >
+          <h2 className="text-xl font-semibold text-gray-900">Trusted Partner Section</h2>
+          <p className="mt-3 text-gray-600">
+            Edit the partner marquee heading, description, and both scrolling rows.
           </p>
         </Link>
 

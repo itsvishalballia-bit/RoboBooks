@@ -5,9 +5,16 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, PhoneCall, Search, X, ArrowRight } from 'lucide-react';
+import {
+  defaultLogoContent,
+  fetchPublicCmsSection,
+  resolveCmsAssetUrl,
+  type LogoCmsContent,
+} from '@/services/cmsService';
 
 const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logo, setLogo] = useState<LogoCmsContent>(defaultLogoContent);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -17,6 +24,10 @@ const Navbar: React.FC = () => {
       document.body.style.overflow = prev;
     };
   }, [mobileOpen]);
+
+  useEffect(() => {
+    fetchPublicCmsSection<LogoCmsContent>('logo', defaultLogoContent).then(setLogo);
+  }, []);
 
   const links = [
     { href: '/about', label: 'About Us' },
@@ -51,8 +62,8 @@ const Navbar: React.FC = () => {
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg lg:hidden">
               <Image
-                src="/images/logo.png"
-                alt="RoboBooks logo"
+                src={resolveCmsAssetUrl(logo.logoUrl)}
+                alt={logo.altText}
                 width={42}
                 height={42}
                 priority
@@ -60,8 +71,8 @@ const Navbar: React.FC = () => {
             </div>
             <div className="hidden lg:flex items-center justify-center text-white">
               <Image
-                src="/images/logo.png"
-                alt="RoboBooks logo"
+                src={resolveCmsAssetUrl(logo.logoUrl)}
+                alt={logo.altText}
                 width={170}
                 height={52}
                 className="h-12 w-auto object-contain drop-shadow-md"
