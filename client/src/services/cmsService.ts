@@ -940,6 +940,34 @@ type CmsResponse<T> = {
   updatedAt?: string | null;
 };
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function mergeCmsContent<T>(fallback: T, content: unknown): T {
+  if (Array.isArray(fallback)) {
+    return (Array.isArray(content) ? content : fallback) as T;
+  }
+
+  if (isPlainObject(fallback)) {
+    const source = isPlainObject(content) ? content : {};
+    const mergedEntries = Object.entries(fallback).map(([key, fallbackValue]) => [
+      key,
+      mergeCmsContent(fallbackValue, source[key]),
+    ]);
+
+    for (const [key, value] of Object.entries(source)) {
+      if (!(key in fallback)) {
+        mergedEntries.push([key, value]);
+      }
+    }
+
+    return Object.fromEntries(mergedEntries) as T;
+  }
+
+  return (content ?? fallback) as T;
+}
+
 export async function fetchPublicCmsSection<T>(
   section: string,
   fallback: T
@@ -954,7 +982,7 @@ export async function fetchPublicCmsSection<T>(
     }
 
     const data = (await response.json()) as CmsResponse<T>;
-    return data.content || fallback;
+    return mergeCmsContent(fallback, data.content);
   } catch {
     return fallback;
   }
