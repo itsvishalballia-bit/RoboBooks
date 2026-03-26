@@ -131,11 +131,44 @@ const BillsPage = () => {
   };
 
   const handleBulkDelete = () => {
-    if (confirm(`Are you sure you want to delete ${selectedBillIds.length} bills?`)) {
-      // TODO: Implement bulk delete functionality
-      console.log("Bulk delete for bills:", selectedBillIds);
-      setSelectedBillIds([]);
-    }
+    const deleteSelectedBills = async () => {
+      if (selectedBillIds.length === 0) {
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to delete ${selectedBillIds.length} bills?`)) {
+        return;
+      }
+
+      try {
+        const idsToDelete = [...selectedBillIds];
+        await Promise.all(idsToDelete.map((billId) => billService.deleteBill(billId)));
+
+        setBills((prev) => prev.filter((bill) => !idsToDelete.includes(bill._id)));
+        setSelectedBillIds([]);
+        if (selectedBill?._id && idsToDelete.includes(selectedBill._id)) {
+          setSelectedBill(null);
+          setShowRightPanel(false);
+          router.push("/dashboard/purchases/bills", { scroll: false });
+        }
+        addToast({
+          title: "Success",
+          message: `${idsToDelete.length} bill(s) deleted successfully`,
+          type: "success",
+          duration: 3000,
+        });
+      } catch (err) {
+        console.error("Error deleting bills:", err);
+        addToast({
+          title: "Error",
+          message: "Failed to delete selected bills",
+          type: "error",
+          duration: 5000,
+        });
+      }
+    };
+
+    void deleteSelectedBills();
   };
 
   const handleClearSelection = () => {

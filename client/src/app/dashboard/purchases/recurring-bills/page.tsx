@@ -92,11 +92,36 @@ const RecurringBillsPage = () => {
   };
 
   const handleBulkDelete = () => {
-    if (confirm(`Are you sure you want to delete ${selectedRecurringBillIds.length} recurring bills?`)) {
-      // TODO: Implement bulk delete functionality
-      console.log("Bulk delete for recurring bills:", selectedRecurringBillIds);
-      setSelectedRecurringBillIds([]);
-    }
+    const deleteSelectedRecurringBills = async () => {
+      if (selectedRecurringBillIds.length === 0) {
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to delete ${selectedRecurringBillIds.length} recurring bills?`)) {
+        return;
+      }
+
+      try {
+        const idsToDelete = [...selectedRecurringBillIds];
+        await Promise.all(
+          idsToDelete.map((billId) => recurringBillService.deleteRecurringBill(billId))
+        );
+
+        setRecurringBills((prev) => prev.filter((bill) => !idsToDelete.includes(bill._id)));
+        setSelectedRecurringBillIds([]);
+        if (selectedRecurringBill?._id && idsToDelete.includes(selectedRecurringBill._id)) {
+          setSelectedRecurringBill(null);
+          setShowRightPanel(false);
+          router.push("/dashboard/purchases/recurring-bills", { scroll: false });
+        }
+        window.alert(`${idsToDelete.length} recurring bill(s) deleted successfully.`);
+      } catch (err) {
+        console.error("Error deleting recurring bills:", err);
+        window.alert("Failed to delete selected recurring bills.");
+      }
+    };
+
+    void deleteSelectedRecurringBills();
   };
 
   const handleClearSelection = () => {

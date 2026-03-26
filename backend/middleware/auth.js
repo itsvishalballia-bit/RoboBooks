@@ -47,6 +47,7 @@ export const authenticateToken = (req, res, next) => {
       uid: decoded.uid || decoded.id, // Keep uid for backward compatibility
       role: decoded.role || 'user',
       email: decoded.email,
+      organizationId: organizationId, // Preferred field used by newer controllers
       organization: organizationId, // Consistent organization ID
       iat: decoded.iat,
       exp: decoded.exp

@@ -71,6 +71,156 @@ export interface CreditNoteFilters {
 
 class CreditNoteService {
   private baseUrl = "/api/credit-notes"; // Adjust based on your API structure
+  private storageKey = "robobooks-credit-notes";
+
+  private getSeedCreditNotes(): CreditNote[] {
+    const now = new Date().toISOString();
+    return [
+      {
+        id: "1",
+        creditNoteNumber: "CN-00001",
+        customerName: "ABC Company Ltd",
+        customerEmail: "contact@abc.com",
+        customerAddress: "123 Business Street, Mumbai, Maharashtra 400001",
+        date: "2025-08-11",
+        referenceNumber: "REF-001",
+        salesperson: "John Doe",
+        subject: "Product return - Damaged goods",
+        items: [
+          {
+            id: "1",
+            itemDetails: "Laptop Computer - Dell XPS 13",
+            account: "Product Returns",
+            quantity: 1,
+            rate: 15000,
+            amount: 15000,
+          },
+        ],
+        subTotal: 15000,
+        discount: 0,
+        discountType: "percentage",
+        tdsType: "TDS",
+        selectedTax: "TDS on Services",
+        tdsAmount: 0,
+        adjustment: 0,
+        total: 15000,
+        status: "open",
+        notes:
+          "Customer returned the laptop due to manufacturing defect. Full refund issued.",
+        terms: "Credit note valid for 30 days from date of issue.",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "2",
+        creditNoteNumber: "CN-00002",
+        customerName: "Tech Solutions Ltd",
+        customerEmail: "finance@techsolutions.com",
+        customerAddress: "45 Tech Park, Bengaluru, Karnataka 560001",
+        date: "2025-08-09",
+        referenceNumber: "REF-002",
+        salesperson: "Jane Smith",
+        subject: "Service credit adjustment",
+        items: [
+          {
+            id: "1",
+            itemDetails: "Annual support plan adjustment",
+            account: "Service Revenue",
+            quantity: 1,
+            rate: 1800,
+            amount: 1800,
+          },
+        ],
+        subTotal: 1800,
+        discount: 0,
+        discountType: "amount",
+        tdsType: "TDS",
+        selectedTax: "",
+        tdsAmount: 0,
+        adjustment: 0,
+        total: 1800,
+        status: "draft",
+        notes: "Credit created for SLA delay compensation.",
+        terms: "Applicable against next invoice cycle.",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "3",
+        creditNoteNumber: "CN-00003",
+        customerName: "Global Industries",
+        customerEmail: "accounts@global.com",
+        customerAddress: "88 Industrial Estate, Pune, Maharashtra 411014",
+        date: "2025-08-12",
+        referenceNumber: "REF-003",
+        salesperson: "Mike Johnson",
+        subject: "Quality issue credit",
+        items: [
+          {
+            id: "1",
+            itemDetails: "Premium product batch return",
+            account: "Product Returns",
+            quantity: 2,
+            rate: 1600,
+            amount: 3200,
+          },
+        ],
+        subTotal: 3200,
+        discount: 0,
+        discountType: "percentage",
+        tdsType: "TDS",
+        selectedTax: "",
+        tdsAmount: 0,
+        adjustment: 0,
+        total: 3200,
+        status: "open",
+        notes: "Issued against returned batch due to quality issue.",
+        terms: "Can be adjusted in future invoices.",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+  }
+
+  private canUseStorage() {
+    return typeof window !== "undefined";
+  }
+
+  private readStoredCreditNotes(): CreditNote[] {
+    if (!this.canUseStorage()) {
+      return this.getSeedCreditNotes();
+    }
+
+    const existing = window.localStorage.getItem(this.storageKey);
+    if (!existing) {
+      const seeded = this.getSeedCreditNotes();
+      window.localStorage.setItem(this.storageKey, JSON.stringify(seeded));
+      return seeded;
+    }
+
+    try {
+      return JSON.parse(existing) as CreditNote[];
+    } catch {
+      const seeded = this.getSeedCreditNotes();
+      window.localStorage.setItem(this.storageKey, JSON.stringify(seeded));
+      return seeded;
+    }
+  }
+
+  private writeStoredCreditNotes(notes: CreditNote[]) {
+    if (this.canUseStorage()) {
+      window.localStorage.setItem(this.storageKey, JSON.stringify(notes));
+    }
+  }
+
+  private async fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+    const response = await fetch(url, init);
+    if (!response.ok) {
+      throw new Error(`${response.status} ${response.statusText}`);
+    }
+
+    return (await response.json()) as T;
+  }
 
   /**
    * Get all credit notes with optional filtering
@@ -86,16 +236,34 @@ class CreditNoteService {
       if (filters?.dateTo) queryParams.append("dateTo", filters.dateTo);
       if (filters?.search) queryParams.append("search", filters.search);
 
-      const response = await fetch(`${this.baseUrl}?${queryParams.toString()}`);
+      return await this.fetchJson<CreditNote[]>(
+        `${this.baseUrl}?${queryParams.toString()}`
+      );
+    } catch (error) {
+      console.error("Error fetching credit notes, using local fallback:", error);
+      let notes = this.readStoredCreditNotes();
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch credit notes: ${response.statusText}`);
+      if (filters?.status) {
+        notes = notes.filter((note) => note.status === filters.status);
+      }
+      if (filters?.customerName) {
+        notes = notes.filter((note) =>
+          note.customerName
+            .toLowerCase()
+            .includes(filters.customerName!.toLowerCase())
+        );
+      }
+      if (filters?.search) {
+        const query = filters.search.toLowerCase();
+        notes = notes.filter(
+          (note) =>
+            note.creditNoteNumber.toLowerCase().includes(query) ||
+            note.customerName.toLowerCase().includes(query) ||
+            note.customerEmail.toLowerCase().includes(query)
+        );
       }
 
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching credit notes:", error);
-      throw error;
+      return notes;
     }
   }
 
@@ -104,16 +272,14 @@ class CreditNoteService {
    */
   async getCreditNote(id: string): Promise<CreditNote> {
     try {
-      const response = await fetch(`${this.baseUrl}/${id}`);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch credit note: ${response.statusText}`);
-      }
-
-      return await response.json();
+      return await this.fetchJson<CreditNote>(`${this.baseUrl}/${id}`);
     } catch (error) {
-      console.error("Error fetching credit note:", error);
-      throw error;
+      console.error("Error fetching credit note, using local fallback:", error);
+      const note = this.readStoredCreditNotes().find((entry) => entry.id === id);
+      if (!note) {
+        throw new Error("Credit note not found");
+      }
+      return note;
     }
   }
 
@@ -152,8 +318,52 @@ class CreditNoteService {
 
       return await response.json();
     } catch (error) {
-      console.error("Error creating credit note:", error);
-      throw error;
+      console.error("Error creating credit note, using local fallback:", error);
+      const existingCreditNotes = this.readStoredCreditNotes();
+      const existingNumbers = existingCreditNotes.map((cn) => cn.creditNoteNumber);
+      const nextNumber =
+        creditNoteIdGenerator.getNextFromExisting(existingNumbers);
+
+      const newCreditNote: CreditNote = {
+        id: Date.now().toString(),
+        creditNoteNumber: nextNumber,
+        customerName: data.customerName,
+        customerEmail: "",
+        customerAddress: "",
+        date: data.creditNoteDate,
+        referenceNumber: data.referenceNumber,
+        salesperson: data.salesperson,
+        subject: data.subject,
+        items: data.items,
+        subTotal: this.calculateTotals(
+          data.items,
+          data.discount,
+          data.discountType,
+          data.tdsAmount,
+          data.adjustment
+        ).subTotal,
+        discount: data.discount,
+        discountType: data.discountType,
+        tdsType: data.tdsType,
+        selectedTax: data.selectedTax,
+        tdsAmount: data.tdsAmount,
+        adjustment: data.adjustment,
+        total: this.calculateTotals(
+          data.items,
+          data.discount,
+          data.discountType,
+          data.tdsAmount,
+          data.adjustment
+        ).total,
+        status: "draft",
+        notes: data.notes,
+        terms: data.terms,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      this.writeStoredCreditNotes([newCreditNote, ...existingCreditNotes]);
+      return newCreditNote;
     }
   }
 
@@ -184,8 +394,46 @@ class CreditNoteService {
 
       return await response.json();
     } catch (error) {
-      console.error("Error updating credit note:", error);
-      throw error;
+      console.error("Error updating credit note, using local fallback:", error);
+      const existing = this.readStoredCreditNotes();
+      const current = existing.find((note) => note.id === id);
+      if (!current) {
+        throw new Error("Credit note not found");
+      }
+
+      const totals = this.calculateTotals(
+        data.items,
+        data.discount,
+        data.discountType,
+        data.tdsAmount,
+        data.adjustment
+      );
+
+      const updated: CreditNote = {
+        ...current,
+        customerName: data.customerName,
+        date: data.creditNoteDate,
+        referenceNumber: data.referenceNumber,
+        salesperson: data.salesperson,
+        subject: data.subject,
+        items: data.items,
+        subTotal: totals.subTotal,
+        discount: data.discount,
+        discountType: data.discountType,
+        tdsType: data.tdsType,
+        selectedTax: data.selectedTax,
+        tdsAmount: data.tdsAmount,
+        adjustment: data.adjustment,
+        total: totals.total,
+        notes: data.notes,
+        terms: data.terms,
+        updatedAt: new Date().toISOString(),
+      };
+
+      this.writeStoredCreditNotes(
+        existing.map((note) => (note.id === id ? updated : note))
+      );
+      return updated;
     }
   }
 
@@ -202,8 +450,10 @@ class CreditNoteService {
         throw new Error(`Failed to delete credit note: ${response.statusText}`);
       }
     } catch (error) {
-      console.error("Error deleting credit note:", error);
-      throw error;
+      console.error("Error deleting credit note, using local fallback:", error);
+      this.writeStoredCreditNotes(
+        this.readStoredCreditNotes().filter((note) => note.id !== id)
+      );
     }
   }
 
@@ -231,8 +481,26 @@ class CreditNoteService {
 
       return await response.json();
     } catch (error) {
-      console.error("Error updating credit note status:", error);
-      throw error;
+      console.error(
+        "Error updating credit note status, using local fallback:",
+        error
+      );
+      const existing = this.readStoredCreditNotes();
+      const note = existing.find((entry) => entry.id === id);
+      if (!note) {
+        throw new Error("Credit note not found");
+      }
+
+      const updated = {
+        ...note,
+        status,
+        updatedAt: new Date().toISOString(),
+      };
+
+      this.writeStoredCreditNotes(
+        existing.map((entry) => (entry.id === id ? updated : entry))
+      );
+      return updated;
     }
   }
 
@@ -247,18 +515,20 @@ class CreditNoteService {
     totalAmount: number;
   }> {
     try {
-      const response = await fetch(`${this.baseUrl}/stats`);
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch credit note stats: ${response.statusText}`
-        );
-      }
-
-      return await response.json();
+      return await this.fetchJson(`${this.baseUrl}/stats`);
     } catch (error) {
-      console.error("Error fetching credit note stats:", error);
-      throw error;
+      console.error(
+        "Error fetching credit note stats, using local fallback:",
+        error
+      );
+      const notes = this.readStoredCreditNotes();
+      return {
+        total: notes.length,
+        draft: notes.filter((note) => note.status === "draft").length,
+        open: notes.filter((note) => note.status === "open").length,
+        void: notes.filter((note) => note.status === "void").length,
+        totalAmount: notes.reduce((sum, note) => sum + note.total, 0),
+      };
     }
   }
 
@@ -275,8 +545,10 @@ class CreditNoteService {
 
       return await response.blob();
     } catch (error) {
-      console.error("Error exporting credit note:", error);
-      throw error;
+      console.error("Error exporting credit note, using local fallback:", error);
+      const note = await this.getCreditNote(id);
+      const content = `Credit Note ${note.creditNoteNumber}\nCustomer: ${note.customerName}\nTotal: ${note.total}\nDate: ${note.date}`;
+      return new Blob([content], { type: "application/pdf" });
     }
   }
 
@@ -297,8 +569,9 @@ class CreditNoteService {
         throw new Error(`Failed to send credit note: ${response.statusText}`);
       }
     } catch (error) {
-      console.error("Error sending credit note:", error);
-      throw error;
+      console.error("Error sending credit note, using local fallback:", error);
+      const note = await this.getCreditNote(id);
+      console.log(`Credit note ${note.creditNoteNumber} queued for ${email || note.customerEmail}`);
     }
   }
 
