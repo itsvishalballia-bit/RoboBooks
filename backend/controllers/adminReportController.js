@@ -98,6 +98,34 @@ export const generateAdminReport = async (req, res) => {
   }
 };
 
+export const deleteAdminReport = async (req, res) => {
+  try {
+    const report = await Report.findOneAndDelete({
+      _id: req.params.id,
+      createdBy: String(req.user.uid),
+    });
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: "Report not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Report deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete admin report error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete admin report",
+      error: error.message,
+    });
+  }
+};
+
 async function getPlatformSnapshot() {
   const [
     totalUsers,

@@ -10,6 +10,7 @@ import {
   DocumentTextIcon,
   EyeIcon,
   PlusIcon,
+  TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
@@ -163,10 +164,16 @@ const prettifyCategory = (category: ReportCategory) =>
 const sanitizeFileName = (value: string) =>
   value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-const downloadJson = (fileName: string, data: unknown) => {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json",
-  });
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const downloadFile = (fileName: string, content: string, type: string) => {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -177,34 +184,365 @@ const downloadJson = (fileName: string, data: unknown) => {
   URL.revokeObjectURL(url);
 };
 
+const formatLabel = (value: string) =>
+  value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const formatValue = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+
+  if (typeof value === "number") {
+    return Number.isInteger(value)
+      ? value.toLocaleString("en-IN")
+      : value.toLocaleString("en-IN", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        });
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+
+  if (typeof value === "string") {
+    const parsedDate = Date.parse(value);
+    if (!Number.isNaN(parsedDate) && /(\d{4}-\d{2}-\d{2}|T\d{2}:\d{2})/.test(value)) {
+      return new Date(parsedDate).toLocaleString("en-IN", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+
+    return value;
+  }
+
+  return JSON.stringify(value);
+};
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const renderReportHtmlSection = (title: string, data: unknown): string => {
+  if (Array.isArray(data)) {
+    const rows = data.length
+      ? data
+          .map((item, index) => {
+            if (isPlainObject(item)) {
+              return `
+                <div class="list-card">
+                  <div class="list-card-title">${escapeHtml(formatLabel(title))} ${index + 1}</div>
+                  <div class="grid">
+                    ${Object.entries(item)
+                      .map(
+                        ([key, value]) => `
+                          <div class="metric">
+                            <div class="label">${escapeHtml(formatLabel(key))}</div>
+                            <div class="value">${escapeHtml(formatValue(value))}</div>
+                          </div>
+                        `
+                      )
+                      .join("")}
+                  </div>
+                </div>
+              `;
+            }
+
+            return `<div class="list-card"><div class="value">${escapeHtml(formatValue(item))}</div></div>`;
+          })
+          .join("")
+      : `<div class="empty">No records available.</div>`;
+
+    return `
+      <section class="section">
+        <h2>${escapeHtml(formatLabel(title))}</h2>
+        ${rows}
+      </section>
+    `;
+  }
+
+  if (isPlainObject(data)) {
+    return `
+      <section class="section">
+        <h2>${escapeHtml(formatLabel(title))}</h2>
+        <div class="grid">
+          ${Object.entries(data)
+            .map(
+              ([key, value]) => `
+                <div class="metric">
+                  <div class="label">${escapeHtml(formatLabel(key))}</div>
+                  <div class="value">${escapeHtml(formatValue(value))}</div>
+                </div>
+              `
+            )
+            .join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="section">
+      <h2>${escapeHtml(formatLabel(title))}</h2>
+      <div class="metric">
+        <div class="value">${escapeHtml(formatValue(data))}</div>
+      </div>
+    </section>
+  `;
+};
+
+const createReportHtmlDocument = (reportName: string, data: unknown) => {
+  const previewObject = isPlainObject(data) ? data : null;
+  const headerEntries = previewObject
+    ? Object.entries(previewObject).filter(
+        ([key, value]) =>
+          ["reportName", "category", "generatedAt", "message"].includes(key) &&
+          !isPlainObject(value) &&
+          !Array.isArray(value)
+      )
+    : [];
+  const sectionEntries = previewObject
+    ? Object.entries(previewObject).filter(
+        ([key]) => !["reportName", "category", "generatedAt", "message"].includes(key)
+      )
+    : [];
+
+  const body = previewObject
+    ? `
+      ${
+        headerEntries.length
+          ? `<section class="section"><div class="grid">${headerEntries
+              .map(
+                ([key, value]) => `
+                  <div class="metric">
+                    <div class="label">${escapeHtml(formatLabel(key))}</div>
+                    <div class="value">${escapeHtml(formatValue(value))}</div>
+                  </div>
+                `
+              )
+              .join("")}</div></section>`
+          : ""
+      }
+      ${sectionEntries
+        .map(([key, value]) => renderReportHtmlSection(key, value))
+        .join("")}
+    `
+    : renderReportHtmlSection("Report", data);
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(reportName)}</title>
+    <style>
+      body { margin: 0; padding: 32px; background: #f8fafc; color: #0f172a; font-family: Arial, sans-serif; }
+      .wrap { max-width: 1100px; margin: 0 auto; }
+      .hero { background: linear-gradient(135deg, #0f172a, #1d4ed8); color: white; border-radius: 24px; padding: 28px; margin-bottom: 24px; }
+      .hero h1 { margin: 0 0 8px; font-size: 32px; }
+      .hero p { margin: 0; color: rgba(255,255,255,0.82); }
+      .section { background: white; border: 1px solid #e2e8f0; border-radius: 20px; padding: 20px; margin-bottom: 20px; }
+      .section h2 { margin: 0 0 16px; font-size: 20px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+      .metric { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; }
+      .label { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 700; }
+      .value { color: #0f172a; font-size: 15px; line-height: 1.5; word-break: break-word; }
+      .list-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+      .list-card-title { font-size: 13px; font-weight: 700; color: #1d4ed8; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+      .empty { color: #64748b; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="hero">
+        <h1>${escapeHtml(reportName)}</h1>
+        <p>Readable export generated from RoboBooks admin reports.</p>
+      </section>
+      ${body}
+    </div>
+  </body>
+</html>`;
+};
+
+const downloadHtmlReport = (fileName: string, reportName: string, data: unknown) => {
+  downloadFile(
+    fileName,
+    createReportHtmlDocument(reportName, data),
+    "text/html;charset=utf-8"
+  );
+};
+
+function PreviewValue({ label, value }: { label: string; value: unknown }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+        {formatLabel(label)}
+      </p>
+      <p className="mt-2 text-sm text-slate-900">{formatValue(value)}</p>
+    </div>
+  );
+}
+
+function PreviewSection({
+  title,
+  data,
+}: {
+  title: string;
+  data: unknown;
+}) {
+  if (Array.isArray(data)) {
+    if (data.length === 0) {
+      return (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5">
+          <h4 className="text-base font-semibold text-slate-900">{formatLabel(title)}</h4>
+          <p className="mt-3 text-sm text-slate-500">No records available.</p>
+        </section>
+      );
+    }
+
+    return (
+      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex items-center justify-between gap-3">
+          <h4 className="text-base font-semibold text-slate-900">{formatLabel(title)}</h4>
+          <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+            {data.length} items
+          </span>
+        </div>
+        <div className="mt-4 space-y-3">
+          {data.map((item, index) => (
+            <div
+              key={`${title}-${index}`}
+              className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+            >
+              {isPlainObject(item) ? (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {Object.entries(item).map(([key, value]) => (
+                    <PreviewValue key={`${title}-${index}-${key}`} label={key} value={value} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-900">{formatValue(item)}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (isPlainObject(data)) {
+    return (
+      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h4 className="text-base font-semibold text-slate-900">{formatLabel(title)}</h4>
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {Object.entries(data).map(([key, value]) => (
+            <PreviewValue key={`${title}-${key}`} label={key} value={value} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5">
+      <h4 className="text-base font-semibold text-slate-900">{formatLabel(title)}</h4>
+      <p className="mt-3 text-sm text-slate-700">{formatValue(data)}</p>
+    </section>
+  );
+}
+
 function PreviewModal({
   reportName,
   previewData,
+  onDownload,
+  onDelete,
+  isDeleting,
   onClose,
 }: {
   reportName: string;
   previewData: unknown;
+  onDownload: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
   onClose: () => void;
 }) {
+  const previewObject = isPlainObject(previewData) ? previewData : null;
+  const headerEntries = previewObject
+    ? Object.entries(previewObject).filter(
+        ([key, value]) =>
+          ["reportName", "category", "generatedAt", "message"].includes(key) &&
+          !isPlainObject(value) &&
+          !Array.isArray(value)
+      )
+    : [];
+  const sectionEntries = previewObject
+    ? Object.entries(previewObject).filter(
+        ([key]) => !["reportName", "category", "generatedAt", "message"].includes(key)
+      )
+    : [];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-4xl rounded-2xl bg-white shadow-2xl">
+      <div className="w-full max-w-5xl rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">{reportName}</h3>
             <p className="text-sm text-slate-500">Generated preview</p>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onDownload}
+              className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-green-600 transition hover:bg-green-50"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              <span>Download</span>
+            </button>
+            <button
+              onClick={onDelete}
+              disabled={isDeleting}
+              className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <TrashIcon className="h-4 w-4" />
+              <span>{isDeleting ? "Deleting..." : "Delete"}</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
-        <div className="max-h-[70vh] overflow-auto px-6 py-5">
-          <pre className="whitespace-pre-wrap break-words rounded-xl bg-slate-950 p-4 text-xs text-slate-100">
-            {JSON.stringify(previewData, null, 2)}
-          </pre>
+        <div className="max-h-[75vh] overflow-auto bg-slate-50 px-6 py-5">
+          {previewObject ? (
+            <div className="space-y-5">
+              {headerEntries.length > 0 ? (
+                <section className="rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {headerEntries.map(([key, value]) => (
+                      <PreviewValue key={key} label={key} value={value} />
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {sectionEntries.map(([key, value]) => (
+                <PreviewSection key={key} title={key} data={value} />
+              ))}
+            </div>
+          ) : (
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+              <p className="text-sm text-slate-700">{formatValue(previewData)}</p>
+            </section>
+          )}
         </div>
       </div>
     </div>
@@ -365,7 +703,9 @@ export default function AdminReports() {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateReportPayload>(createInitialForm);
+  const [previewReportId, setPreviewReportId] = useState<string | null>(null);
   const [previewReportName, setPreviewReportName] = useState("");
   const [previewData, setPreviewData] = useState<unknown>(null);
   const { showToast } = useToast();
@@ -440,12 +780,14 @@ export default function AdminReports() {
 
       if (mode === "download") {
         const datePart = new Date().toISOString().split("T")[0];
-        downloadJson(
-          `${sanitizeFileName(report.name || "report")}-${datePart}.json`,
+        downloadHtmlReport(
+          `${sanitizeFileName(report.name || "report")}-${datePart}.html`,
+          report.name || "Report",
           response.data
         );
         showToast("Report downloaded successfully", "success");
       } else {
+        setPreviewReportId(report._id);
         setPreviewReportName(report.name);
         setPreviewData(response.data);
       }
@@ -470,6 +812,52 @@ export default function AdminReports() {
       category: template.category,
     });
     setShowGenerateModal(true);
+  };
+
+  const deleteReport = async (reportId: string, reportName: string) => {
+    const shouldDelete = window.confirm(
+      `Delete "${reportName}"? This action cannot be undone.`
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      setDeletingReportId(reportId);
+      await api(`/api/admin/reports/${reportId}`, {
+        method: "DELETE",
+      });
+      if (previewReportId === reportId) {
+        setPreviewReportId(null);
+        setPreviewReportName("");
+        setPreviewData(null);
+      }
+      showToast("Report deleted successfully", "success");
+      await fetchReports();
+    } catch (error) {
+      console.error("Error deleting report:", error);
+      showToast(
+        error instanceof Error ? error.message : "Failed to delete report",
+        "error"
+      );
+    } finally {
+      setDeletingReportId(null);
+    }
+  };
+
+  const downloadPreviewReport = () => {
+    if (previewData === null) {
+      return;
+    }
+
+    const datePart = new Date().toISOString().split("T")[0];
+    downloadHtmlReport(
+      `${sanitizeFileName(previewReportName || "report")}-${datePart}.html`,
+      previewReportName || "Report",
+      previewData
+    );
+    showToast("Report downloaded successfully", "success");
   };
 
   if (loading) {
@@ -550,6 +938,7 @@ export default function AdminReports() {
         ) : (
           reports.map((report) => {
             const isBusy = activeReportId === report._id;
+            const isDeleting = deletingReportId === report._id;
             const statusLabel = report.lastRun ? "generated" : "pending";
 
             return (
@@ -606,6 +995,14 @@ export default function AdminReports() {
                     <ArrowDownTrayIcon className="h-4 w-4" />
                     <span>{isBusy ? "Preparing..." : "Download"}</span>
                   </button>
+                  <button
+                    onClick={() => deleteReport(report._id, report.name)}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                    <span>{isDeleting ? "Deleting..." : "Delete"}</span>
+                  </button>
                 </div>
               </div>
             );
@@ -649,7 +1046,15 @@ export default function AdminReports() {
         <PreviewModal
           reportName={previewReportName}
           previewData={previewData}
+          onDownload={downloadPreviewReport}
+          onDelete={() => {
+            if (previewReportId) {
+              void deleteReport(previewReportId, previewReportName);
+            }
+          }}
+          isDeleting={deletingReportId === previewReportId}
           onClose={() => {
+            setPreviewReportId(null);
             setPreviewData(null);
             setPreviewReportName("");
           }}

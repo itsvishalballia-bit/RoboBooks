@@ -40,6 +40,7 @@ import {
   getAdminReports,
   createAdminReport,
   generateAdminReport,
+  deleteAdminReport,
 } from "../controllers/adminReportController.js";
 
 const router = express.Router();
@@ -65,6 +66,12 @@ router.post(
   adminAuthGuard,
   requirePermission("view_reports"),
   generateAdminReport
+);
+router.delete(
+  "/reports/:id",
+  adminAuthGuard,
+  requirePermission("view_reports"),
+  deleteAdminReport
 );
 
 // Simple admin creation route (for testing - remove in production)

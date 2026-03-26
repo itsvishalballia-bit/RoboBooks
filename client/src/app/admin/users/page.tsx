@@ -255,6 +255,57 @@ export default function AdminUsers() {
     }
   };
 
+  const formatDisplayValue = (value?: string | Date | boolean) => {
+    if (value === undefined || value === null || value === "") {
+      return "-";
+    }
+
+    if (value instanceof Date) {
+      return value.toLocaleString();
+    }
+
+    return String(value);
+  };
+
+  const escapeHtml = (value?: string | Date | boolean) =>
+    formatDisplayValue(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+
+  const handleViewUser = (user: AdminUser) => {
+    const createdDate =
+      user.createdAt instanceof Date
+        ? user.createdAt.toLocaleString()
+        : new Date(user.createdAt).toLocaleString();
+    const lastLogin =
+      user.lastLogin instanceof Date
+        ? user.lastLogin.toLocaleString()
+        : user.lastLogin
+        ? new Date(user.lastLogin).toLocaleString()
+        : "-";
+
+    void Swal.fire({
+      title: user.companyName,
+      html: `
+        <div style="text-align:left; display:grid; gap:12px; font-size:14px;">
+          <div><strong>Email:</strong> ${escapeHtml(user.email)}</div>
+          <div><strong>Phone:</strong> ${escapeHtml(user.phone)}</div>
+          <div><strong>Country:</strong> ${escapeHtml(user.country)}</div>
+          <div><strong>State:</strong> ${escapeHtml(user.state)}</div>
+          <div><strong>Status:</strong> ${user.isActive ? "Active" : "Inactive"}</div>
+          <div><strong>Created Date:</strong> ${escapeHtml(createdDate)}</div>
+          <div><strong>Last Login:</strong> ${escapeHtml(lastLogin)}</div>
+        </div>
+      `,
+      confirmButtonText: "Close",
+      confirmButtonColor: "#2563eb",
+      width: 600,
+    });
+  };
+
   const handleSort = (field: keyof AdminUser) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -414,7 +465,10 @@ export default function AdminUsers() {
         </div>
       </div>
       <div className="mt-4 flex space-x-2">
-        <button className="flex items-center space-x-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg">
+        <button
+          onClick={() => handleViewUser(user)}
+          className="flex items-center space-x-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+        >
           <EyeIcon className="h-4 w-4" />
           <span>View</span>
         </button>
@@ -567,6 +621,7 @@ export default function AdminUsers() {
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center space-x-2">
                     <button
+                      onClick={() => handleViewUser(user)}
                       className="text-blue-600 hover:text-blue-900"
                       title="View"
                     >

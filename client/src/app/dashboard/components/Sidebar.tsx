@@ -277,6 +277,42 @@ const NAV: Node[] = [
   },
 ];
 
+const CREATE_ROUTE_BY_HREF: Record<string, string> = {
+  "/dashboard": "/dashboard",
+  "/dashboard/items": "/dashboard/items/new",
+  "/dashboard/banking": "/dashboard/banking",
+  "/dashboard/customers": "/dashboard/customers/new",
+  "/dashboard/sales/quotes": "/dashboard/sales/quotes/new",
+  "/dashboard/sales/sales-orders": "/dashboard/sales/sales-orders/new",
+  "/dashboard/sales/delivery-challans": "/dashboard/sales/delivery-challans/new",
+  "/dashboard/sales/invoices": "/dashboard/sales/invoices/new",
+  "/dashboard/sales/payments-received": "/dashboard/sales/payments-received",
+  "/dashboard/sales/recurring-invoices": "/dashboard/sales/recurring-invoices/new",
+  "/dashboard/sales/credit-notes": "/dashboard/sales/credit-notes/new",
+  "/dashboard/purchases/vendors": "/dashboard/purchases/vendors/new",
+  "/dashboard/purchases/expenses": "/dashboard/purchases/expenses/new",
+  "/dashboard/purchases/recurring-expenses": "/dashboard/purchases/recurring-expenses/new",
+  "/dashboard/purchases/purchase-orders": "/dashboard/purchases/purchase-orders/new",
+  "/dashboard/purchases/bills": "/dashboard/purchases/bills/new",
+  "/dashboard/purchases/payments-made": "/dashboard/purchases/payments-made/new",
+  "/dashboard/purchases/recurring-bills": "/dashboard/purchases/recurring-bills/new",
+  "/dashboard/purchases/vendor-credits": "/dashboard/purchases/vendor-credits/new",
+  "/dashboard/time/projects": "/dashboard/time/projects",
+  "/dashboard/time/timesheet": "/dashboard/time/timesheet",
+  "/dashboard/accountant/profit-loss": "/dashboard/accountant/profit-loss",
+  "/dashboard/accountant/balance-sheet": "/dashboard/accountant/balance-sheet",
+  "/dashboard/accountant/manual-journals": "/dashboard/accountant/manual-journals/new",
+  "/dashboard/accountant/bulk-update": "/dashboard/accountant/bulk-update",
+  "/dashboard/accountant/currency-adjustments": "/dashboard/accountant/currency-adjustments/new",
+  "/dashboard/accountant/chart-of-accounts": "/dashboard/accountant/chart-of-accounts",
+  "/dashboard/accountant/budgets": "/dashboard/accountant/budgets",
+  "/dashboard/accountant/transaction-locking": "/dashboard/accountant/transaction-locking",
+  "/dashboard/reports": "/dashboard/reports",
+  "/dashboard/documents": "/dashboard/documents",
+  "/dashboard/help-support": "/dashboard/help-support",
+  "/dashboard/configure": "/dashboard/configure",
+};
+
 const cn = (...xs: (string | false | undefined)[]) =>
   xs.filter(Boolean).join(" ");
 
@@ -361,9 +397,8 @@ export default function Sidebar({
     setFlyId(id);
   }
 
-  const onPlus = (label: string) => {
-    // Hook your create action here
-    console.log("Create new:", label);
+  const onPlus = (href: string) => {
+    router.push(CREATE_ROUTE_BY_HREF[href] ?? href);
   };
 
   // Handle navigation
@@ -512,7 +547,7 @@ export default function Sidebar({
                                     onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();
-                                      onPlus(leaf.label);
+                                      onPlus(leaf.href);
                                     }}
                                     className="opacity-0 scale-95 transition-all duration-150 group-hover:opacity-100 group-hover:scale-100 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-900 text-white cursor-pointer"
                                     aria-label={`Create new ${leaf.label}`}
@@ -596,7 +631,7 @@ export default function Sidebar({
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  onPlus(leaf.label);
+                                  onPlus(leaf.href);
                                 }}
                                 className="opacity-0 scale-95 transition-all duration-150 group-hover:opacity-100 group-hover:scale-100 inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-white cursor-pointer"
                                 aria-label={`Create new ${leaf.label}`}
@@ -629,7 +664,10 @@ export default function Sidebar({
                     Join us for a free webinar and get an in-depth overview of
                     books.
                   </p>
-                  <button className="mt-2 text-sm text-blue-600 hover:underline">
+                  <button
+                    onClick={() => router.push("/contact")}
+                    className="mt-2 text-sm text-blue-600 hover:underline"
+                  >
                     Register Now →
                   </button>
                 </div>

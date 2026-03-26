@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/utils/currency";
+import { creditNoteService } from "../services/creditNoteService";
 
 interface CreditNoteItem {
   id: string;
@@ -57,47 +58,23 @@ const CreditNoteDetailPage = () => {
   const router = useRouter();
   const [creditNote, setCreditNote] = useState<CreditNote | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mock data - in real app, fetch from API
-    const mockCreditNote: CreditNote = {
-      id: params.id as string,
-      creditNoteNumber: "CN-00001",
-      customerName: "ABC Company Ltd",
-      customerEmail: "contact@abc.com",
-      customerAddress: "123 Business Street, Mumbai, Maharashtra 400001",
-      date: "2025-08-11",
-      referenceNumber: "REF-001",
-      salesperson: "John Doe",
-      subject: "Product return - Damaged goods",
-      items: [
-        {
-          id: "1",
-          itemDetails: "Laptop Computer - Dell XPS 13",
-          account: "Product Returns",
-          quantity: 1,
-          rate: 15000,
-          amount: 15000,
-        },
-      ],
-      subTotal: 15000,
-      discount: 0,
-      discountType: "percentage",
-      tdsType: "TDS",
-      selectedTax: "TDS on Services",
-      tdsAmount: 0,
-      adjustment: 0,
-      total: 15000,
-      status: "open",
-      notes:
-        "Customer returned the laptop due to manufacturing defect. Full refund issued.",
-      terms: "Credit note valid for 30 days from date of issue.",
+    const loadCreditNote = async () => {
+      try {
+        setLoading(true);
+        const note = await creditNoteService.getCreditNote(params.id as string);
+        setCreditNote(note);
+      } catch (error) {
+        console.error("Failed to load credit note:", error);
+        setCreditNote(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setTimeout(() => {
-      setCreditNote(mockCreditNote);
-      setLoading(false);
-    }, 1000);
+    void loadCreditNote();
   }, [params.id]);
 
   const formatDate = (dateString: string) => {
@@ -118,6 +95,52 @@ const CreditNoteDetailPage = () => {
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownload = async () => {
+    if (!creditNote) return;
+
+    try {
+      setActionLoading("download");
+      const blob = await creditNoteService.exportToPDF(creditNote.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${creditNote.creditNoteNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to download credit note:", error);
+      window.alert("Download failed. Please try again.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSendToCustomer = async () => {
+    if (!creditNote) return;
+
+    try {
+      setActionLoading("send");
+      await creditNoteService.sendToCustomer(
+        creditNote.id,
+        creditNote.customerEmail
+      );
+      window.alert(
+        `Credit note ${creditNote.creditNoteNumber} sent to ${creditNote.customerEmail || "customer"}.`
+      );
+    } catch (error) {
+      console.error("Failed to send credit note:", error);
+      window.alert("Send failed. Please try again.");
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -172,10 +195,17 @@ const CreditNoteDetailPage = () => {
               creditNote.status.slice(1)}
           </span>
           <div className="flex items-center space-x-2">
-            <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+            <button
+              onClick={handlePrint}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+            >
               <Printer className="w-4 h-4" />
             </button>
-            <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+            <button
+              onClick={handleDownload}
+              disabled={actionLoading === "download"}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg disabled:opacity-50"
+            >
               <Download className="w-4 h-4" />
             </button>
             <Link
@@ -407,13 +437,24 @@ const CreditNoteDetailPage = () => {
 
             {/* Action Buttons */}
             <div className="mt-6 space-y-3">
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Send to Customer
+              <button
+                onClick={handleSendToCustomer}
+                disabled={actionLoading === "send"}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {actionLoading === "send" ? "Sending..." : "Send to Customer"}
               </button>
-              <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                Download PDF
+              <button
+                onClick={handleDownload}
+                disabled={actionLoading === "download"}
+                className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                {actionLoading === "download" ? "Downloading..." : "Download PDF"}
               </button>
-              <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+              <button
+                onClick={handlePrint}
+                className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
                 Print
               </button>
             </div>

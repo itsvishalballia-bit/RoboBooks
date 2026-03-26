@@ -16,7 +16,7 @@ import authRoutes from "./routes/auth.js";
 import accountsRoutes from "./routes/accounts.js";
 // Removed legacy bankTransactions router to avoid conflicts
 import vendorsRoutes from "./routes/vendorsRoutes.js";
-import billsRoutes from "./routes/bills.routes.js";
+import billRoutes from "./routes/billRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import expensesRoutes from "./routes/expenses.routes.js";
 import purchaseOrderRoutes from "./routes/purchaseOrder.routes.js";
@@ -122,7 +122,7 @@ app.use("/api/accounts", accountsRoutes);
 // Banking routes
 app.use("/api/banking", bankingRoutes);
 app.use("/api/vendors", vendorsRoutes);
-app.use("/api/bills", billsRoutes);
+app.use("/api/bills", billRoutes);
 app.use("/api/expenses", expensesRoutes);
 app.use("/api/estimates", estimatesRoutes);
 app.use("/api/invoices", invoiceRoutes);
