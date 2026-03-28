@@ -9,14 +9,17 @@ import {
 import Navbar from "../homepage/components/Navbar";
 import Footer from "../homepage/components/Footer";
 import InnerPageHero from "../components/InnerPageHero";
+import { footerCategories, normalizeFooterLinkGroups } from "./footerData";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function FooterHubPage() {
-  const footerContent = await fetchPublicCmsSection<FooterCmsContent>(
-    "footer",
-    defaultFooterContent
+  const footerContent = normalizeFooterLinkGroups(
+    await fetchPublicCmsSection<FooterCmsContent>(
+      "footer",
+      defaultFooterContent
+    )
   );
   const footerGroups = getFooterGroups(footerContent);
   const totalLinks = footerGroups.reduce((sum, group) => sum + group.links.length, 0);
@@ -27,16 +30,16 @@ export default async function FooterHubPage() {
       <InnerPageHero
         eyebrow="Footer Navigation"
         title="Explore every footer page from one dynamic section"
-        description="This footer hub collects all product, company, and legal links in one place. Every card below opens a dynamic detail page powered by shared footer data."
+        description="This footer hub collects all product, company, and legal links in one place. Every card below opens a clean public route powered by shared footer data."
         primaryAction={{ href: "/register", label: "Start free trial" }}
         secondaryAction={{ href: "/contact", label: "Book a demo" }}
         variant="banner"
         breadcrumbLabel="Footer"
         stats={[
-          { value: String(totalLinks), label: "Footer links" },
-          { value: String(footerGroups.length), label: "Link groups" },
+          { value: "16", label: "Footer links" },
+          { value: "3", label: "Link groups" },
           { value: "1", label: "Shared config" },
-          { value: "100%", label: "Dynamic pages" },
+          { value: "100%", label: "Clean URLs" },
         ]}
       />
 
@@ -58,7 +61,7 @@ export default async function FooterHubPage() {
                     </h2>
                   </div>
                   <p className="max-w-2xl text-sm leading-7 text-slate-500">
-                    Each item below opens its own dynamic page so this footer section can scale from one shared content source.
+                    Each item below opens its own clean route while the content stays managed from one shared footer source.
                   </p>
                 </div>
 
@@ -76,7 +79,7 @@ export default async function FooterHubPage() {
                         {link.href}
                       </p>
                       <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#0f2344] transition group-hover:text-[#0aa6c9]">
-                        Open dynamic page
+                        Open page
                         <ArrowRight size={16} />
                       </span>
                     </Link>

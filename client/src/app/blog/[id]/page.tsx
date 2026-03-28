@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import Navbar from '../../homepage/components/Navbar'
 import Footer from '../../homepage/components/Footer'
-import { defaultBlogContent, fetchPublicCmsSection } from '@/services/cmsService'
+import { defaultBlogContent, fetchPublicCmsSection, resolveCmsAssetUrl } from '@/services/cmsService'
 
 function normalizeRichText(value: string) {
   const trimmed = value.trim()
@@ -20,14 +20,18 @@ function normalizeRichText(value: string) {
   }
 
   const hasHtmlTag = /<\/?[a-z][\s\S]*>/i.test(trimmed)
-  if (hasHtmlTag) {
-    return trimmed
-  }
-
-  return trimmed
+  const html = hasHtmlTag
+    ? trimmed
+    : trimmed
     .split(/\n{2,}/)
     .map((paragraph) => `<p>${paragraph.replace(/\n/g, '<br>')}</p>`)
     .join('')
+
+  return html.replace(
+    /\b(src|poster)=["']([^"']+)["']/gi,
+    (_match, attribute: string, url: string) =>
+      `${attribute}="${resolveCmsAssetUrl(url)}"`
+  )
 }
 
 function RichTextContent({
@@ -108,7 +112,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               <div className="overflow-hidden rounded-[34px] border border-[#d8e7f1] bg-white shadow-[0_22px_60px_rgba(15,35,68,0.08)]">
                 <div className="relative aspect-[3/2] max-h-[240px] w-full overflow-hidden bg-[#eef4f8] sm:max-h-[300px] lg:max-h-[340px]">
                   <Image
-                    src={post.image}
+                    src={resolveCmsAssetUrl(post.image)}
                     alt={post.title}
                     fill
                     className="object-contain object-center"
@@ -182,7 +186,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                     >
                       <div className="relative flex h-40 items-center justify-center overflow-hidden bg-[#eef4f8]">
                         <Image
-                          src={relatedPost.image}
+                          src={resolveCmsAssetUrl(relatedPost.image)}
                           alt={relatedPost.title}
                           fill
                           className="object-contain object-center transition duration-500 group-hover:scale-105"

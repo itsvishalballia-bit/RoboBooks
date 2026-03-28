@@ -4,7 +4,7 @@ import { CalendarDays, Clock3, Tag, ArrowRight } from 'lucide-react'
 import Navbar from '../homepage/components/Navbar'
 import Footer from '../homepage/components/Footer'
 import InnerPageHero from '../components/InnerPageHero'
-import { defaultBlogContent, fetchPublicCmsSection } from '@/services/cmsService'
+import { defaultBlogContent, fetchPublicCmsSection, resolveCmsAssetUrl } from '@/services/cmsService'
 
 const BlogPage = async () => {
   const content = await fetchPublicCmsSection('blog', defaultBlogContent)
@@ -46,7 +46,7 @@ const BlogPage = async () => {
               >
                 <div className="relative h-36 overflow-hidden">
                   <Image
-                    src={post.image}
+                    src={resolveCmsAssetUrl(post.image)}
                     alt={post.title}
                     fill
                     className="object-cover transition duration-500 group-hover:scale-105"

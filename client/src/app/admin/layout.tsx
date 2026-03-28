@@ -16,6 +16,8 @@ import {
   ArrowRightOnRectangleIcon,
   TableCellsIcon,
   ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 
 interface Admin {
@@ -43,8 +45,35 @@ export default function AdminLayout({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const authCheckRef = useRef(false);
   const redirectAttemptsRef = useRef(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const savedSidebarState = window.localStorage.getItem("admin-sidebar-collapsed");
+    if (savedSidebarState === "true") {
+      setIsSidebarCollapsed(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      "admin-sidebar-collapsed",
+      isSidebarCollapsed ? "true" : "false"
+    );
+
+    if (isSidebarCollapsed) {
+      setIsProfileMenuOpen(false);
+    }
+  }, [isSidebarCollapsed]);
 
   useEffect(() => {
     // Prevent multiple auth checks
@@ -203,6 +232,10 @@ export default function AdminLayout({
 
   const getMenuStateKey = (item: NavNode) => item.menuKey || item.href;
 
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((current) => !current);
+  };
+
   const NavChildren = ({
     items,
     depth = 0,
@@ -210,6 +243,10 @@ export default function AdminLayout({
     items: NavNode[];
     depth?: number;
   }) => {
+    if (isSidebarCollapsed) {
+      return null;
+    }
+
     return (
       <div
         className={`space-y-1 border-l border-[#d8e7f1] ${
@@ -274,15 +311,36 @@ export default function AdminLayout({
 
   const NavItem = ({ item }: { item: NavNode }) => {
     const itemStateKey = getMenuStateKey(item);
+    const ItemIcon = item.icon;
     const isActive = isActiveTab(item.href);
     const isExpanded = Boolean(item.children && isMenuExpanded(itemStateKey));
+    const baseItemClass = `group flex w-full items-center rounded-2xl py-3 text-sm font-medium transition ${
+      isSidebarCollapsed ? "justify-center px-2" : "justify-between px-3"
+    } ${
+      isActive || isExpanded
+        ? "bg-[linear-gradient(135deg,#eff8ff_0%,#eefbff_100%)] text-[#0f2344] shadow-[0_12px_25px_rgba(10,166,201,0.12)] ring-1 ring-[#b7e9f2]"
+        : "text-[#4d5f7c] hover:bg-[#f4fbff] hover:text-[#0f2344]"
+    }`;
 
     const toggleMenu = () => {
+      if (isSidebarCollapsed) {
+        setIsSidebarCollapsed(false);
+        setExpandedMenus((current) => ({
+          ...current,
+          [itemStateKey]: true,
+        }));
+        return;
+      }
+
       setExpandedMenus((current) => ({
         ...current,
         [itemStateKey]: !current[itemStateKey],
       }));
     };
+
+    if (!ItemIcon) {
+      return null;
+    }
 
     return (
       <div className="space-y-1">
@@ -290,44 +348,42 @@ export default function AdminLayout({
           <button
             type="button"
             onClick={toggleMenu}
-            className={`group flex w-full items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium transition ${
-              isActive || isExpanded
-                ? "bg-[linear-gradient(135deg,#eff8ff_0%,#eefbff_100%)] text-[#0f2344] shadow-[0_12px_25px_rgba(10,166,201,0.12)] ring-1 ring-[#b7e9f2]"
-                : "text-[#4d5f7c] hover:bg-[#f4fbff] hover:text-[#0f2344]"
-            }`}
+            title={isSidebarCollapsed ? item.name : undefined}
+            aria-label={isSidebarCollapsed ? item.name : undefined}
+            className={baseItemClass}
           >
             <span className="flex items-center">
-              <item.icon
-                className={`mr-3 h-5 w-5 ${
+              <ItemIcon
+                className={`h-5 w-5 ${
                   isActive || isExpanded
                     ? "text-[#0aa6c9]"
                     : "text-[#8fa4bf] group-hover:text-[#0088c5]"
-                }`}
+                } ${isSidebarCollapsed ? "" : "mr-3"}`}
               />
-              {item.name}
+              {isSidebarCollapsed ? null : item.name}
             </span>
-            <ChevronDownIcon
-              className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-            />
+            {isSidebarCollapsed ? null : (
+              <ChevronDownIcon
+                className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+              />
+            )}
           </button>
         ) : (
           <Link
             href={item.href}
-            className={`group flex items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium transition ${
-              isActive || isExpanded
-                ? "bg-[linear-gradient(135deg,#eff8ff_0%,#eefbff_100%)] text-[#0f2344] shadow-[0_12px_25px_rgba(10,166,201,0.12)] ring-1 ring-[#b7e9f2]"
-                : "text-[#4d5f7c] hover:bg-[#f4fbff] hover:text-[#0f2344]"
-            }`}
+            title={isSidebarCollapsed ? item.name : undefined}
+            aria-label={isSidebarCollapsed ? item.name : undefined}
+            className={baseItemClass}
           >
             <span className="flex items-center">
-              <item.icon
-                className={`mr-3 h-5 w-5 ${
+              <ItemIcon
+                className={`h-5 w-5 ${
                   isActive || isExpanded
                     ? "text-[#0aa6c9]"
                     : "text-[#8fa4bf] group-hover:text-[#0088c5]"
-                }`}
+                } ${isSidebarCollapsed ? "" : "mr-3"}`}
               />
-              {item.name}
+              {isSidebarCollapsed ? null : item.name}
             </span>
           </Link>
         )}
@@ -372,14 +428,28 @@ export default function AdminLayout({
       <div className="pointer-events-none absolute bottom-[-8rem] right-[-10rem] h-80 w-80 rounded-full bg-[#0f2344]/8 blur-3xl" />
 
       {/* Fixed Sidebar - Only visible when authenticated */}
-      <div className="fixed inset-y-0 left-0 z-50 flex w-72 min-h-0 flex-col overflow-hidden border-r border-[#d8e7f1] bg-white/95 shadow-[0_20px_50px_rgba(15,35,68,0.08)] backdrop-blur">
+      <div
+        className={`fixed inset-y-0 left-0 z-50 flex min-h-0 flex-col overflow-hidden border-r border-[#d8e7f1] bg-white/95 shadow-[0_20px_50px_rgba(15,35,68,0.08)] backdrop-blur transition-[width] duration-300 ${
+          isSidebarCollapsed ? "w-24" : "w-72"
+        }`}
+      >
         <div className="relative shrink-0 overflow-hidden border-b border-[#d8e7f1]">
           <div
             className="absolute inset-y-0 left-0 hidden w-full bg-gradient-to-r from-[#08c1c9] via-[#04a6c7] to-[#006fae] lg:block"
             style={{ clipPath: "polygon(0 0, 100% 0, 82% 100%, 0 100%)" }}
           />
-          <div className="relative flex h-20 items-center justify-center px-4">
-            <div className="flex w-full items-center justify-center gap-2.5 lg:-translate-x-3">
+          <div
+            className={`relative flex h-20 items-center ${
+              isSidebarCollapsed ? "justify-center px-3" : "justify-between px-4"
+            }`}
+          >
+            <div
+              className={`flex items-center ${
+                isSidebarCollapsed
+                  ? "justify-center"
+                  : "w-full justify-center gap-2.5 lg:-translate-x-3"
+              }`}
+            >
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg">
                 <Image
                   src="/images/logo.png"
@@ -390,19 +460,39 @@ export default function AdminLayout({
                   priority
                 />
               </div>
-              <div className="lg:text-white">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#0f2344]/70 lg:text-white/80">
-                  RoboBooks
-                </p>
-                <h1 className="text-[1.7rem] font-bold leading-none text-[#0f2344] lg:text-white">
-                  Admin Panel
-                </h1>
-              </div>
+              {isSidebarCollapsed ? null : (
+                <div className="lg:text-white">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#0f2344]/70 lg:text-white/80">
+                    RoboBooks
+                  </p>
+                  <h1 className="text-[1.7rem] font-bold leading-none text-[#0f2344] lg:text-white">
+                    Admin Panel
+                  </h1>
+                </div>
+              )}
             </div>
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className={`absolute top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-white/90 text-[#0f2344] shadow-[0_10px_20px_rgba(15,35,68,0.12)] transition hover:border-[#0aa6c9]/40 hover:text-[#0088c5] ${
+                isSidebarCollapsed ? "right-2" : "right-4"
+              }`}
+            >
+              {isSidebarCollapsed ? (
+                <ChevronRightIcon className="h-5 w-5" />
+              ) : (
+                <ChevronLeftIcon className="h-5 w-5" />
+              )}
+            </button>
           </div>
         </div>
 
-        <nav className="sidebar-scrollbar flex-1 overflow-y-auto px-3 py-4">
+        <nav
+          className={`sidebar-scrollbar flex-1 overflow-y-auto py-4 transition-[padding] duration-300 ${
+            isSidebarCollapsed ? "px-2" : "px-3"
+          }`}
+        >
           <div className="space-y-1.5 pr-1">
             {navigation.map((item) => (
               <NavItem key={item.name} item={item} />
@@ -410,47 +500,82 @@ export default function AdminLayout({
           </div>
         </nav>
         <div className="shrink-0 border-t border-[#d8e7f1] p-4">
-          <div className="rounded-[20px] border border-[#d8e7f1] bg-[#f8fbff]">
-            <button
-              type="button"
-              onClick={() => setIsProfileMenuOpen((current) => !current)}
-              className="flex w-full items-center justify-between gap-3 p-3 text-left"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f2344] text-white shadow-[0_10px_20px_rgba(15,35,68,0.18)]">
-                  <UserCircleIcon className="h-7 w-7" />
-                </div>
-                <div>
-                  <p className="text-sm text-[#0f2344]">{admin?.fullName || "Admin"}</p>
-                </div>
+          {isSidebarCollapsed ? (
+            <div className="flex flex-col items-center gap-3 rounded-[20px] border border-[#d8e7f1] bg-[#f8fbff] px-2 py-3">
+              <div
+                title={admin?.fullName || "Admin"}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f2344] text-white shadow-[0_10px_20px_rgba(15,35,68,0.18)]"
+              >
+                <UserCircleIcon className="h-7 w-7" />
               </div>
-              <ChevronDownIcon
-                className={`h-5 w-5 text-[#5d708f] transition-transform ${
-                  isProfileMenuOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+              <button
+                onClick={handleLogout}
+                title="Logout"
+                aria-label="Logout"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d8e7f1] bg-white text-[#0f2344] transition hover:border-[#0aa6c9]/40 hover:text-[#0088c5]"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-[20px] border border-[#d8e7f1] bg-[#f8fbff]">
+              <button
+                type="button"
+                onClick={() => setIsProfileMenuOpen((current) => !current)}
+                className="flex w-full items-center justify-between gap-3 p-3 text-left"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f2344] text-white shadow-[0_10px_20px_rgba(15,35,68,0.18)]">
+                    <UserCircleIcon className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#0f2344]">{admin?.fullName || "Admin"}</p>
+                  </div>
+                </div>
+                <ChevronDownIcon
+                  className={`h-5 w-5 text-[#5d708f] transition-transform ${
+                    isProfileMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
 
-            {isProfileMenuOpen ? (
-              <div className="border-t border-[#d8e7f1] px-3 py-2">
-                <button
-                  onClick={handleLogout}
-                  className="flex w-full items-center gap-x-2 rounded-xl px-3 py-2 text-sm text-[#0f2344] transition hover:bg-white hover:text-[#0088c5]"
-                >
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            ) : null}
-          </div>
+              {isProfileMenuOpen ? (
+                <div className="border-t border-[#d8e7f1] px-3 py-2">
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-x-2 rounded-xl px-3 py-2 text-sm text-[#0f2344] transition hover:bg-white hover:text-[#0088c5]"
+                  >
+                    <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="main-content-scrollbar ml-72 h-screen flex-1 overflow-y-auto">
+      <div
+        className={`main-content-scrollbar h-screen flex-1 overflow-y-auto transition-[margin] duration-300 ${
+          isSidebarCollapsed ? "ml-24" : "ml-72"
+        }`}
+      >
         {/* Top Header */}
         <div className="sticky top-0 z-40 px-4 pt-4 sm:px-6 lg:px-8">
           <div className="flex min-h-[76px] items-center gap-x-4 rounded-[28px] border border-[#d8e7f1] bg-white/90 px-5 shadow-[0_16px_40px_rgba(15,35,68,0.06)] backdrop-blur sm:px-6">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d8e7f1] bg-[#f8fbff] text-[#4d5f7c] transition hover:border-[#0aa6c9]/40 hover:text-[#0088c5]"
+            >
+              {isSidebarCollapsed ? (
+                <ChevronRightIcon className="h-5 w-5" />
+              ) : (
+                <ChevronLeftIcon className="h-5 w-5" />
+              )}
+            </button>
             <div className="flex flex-1 items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#0aa6c9]">
