@@ -1,4 +1,57 @@
-import Bill from '../models/bill.model.js';
+import mongoose from 'mongoose';
+import Bill from '../models/Bill.js';
+
+const PENDING_BILL_STATUSES = ['draft', 'sent', 'received'];
+
+const toObjectId = (value) => {
+  if (!value) {
+    return value;
+  }
+
+  if (value instanceof mongoose.Types.ObjectId) {
+    return value;
+  }
+
+  return mongoose.Types.ObjectId.isValid(value)
+    ? new mongoose.Types.ObjectId(value)
+    : value;
+};
+
+const toPositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const buildBillMatch = (filters = {}) => {
+  const { startDate, endDate, organizationId, vendorId, status } = filters;
+  const match = {};
+
+  if (organizationId) {
+    match.organizationId = toObjectId(organizationId);
+  }
+
+  if (vendorId) {
+    match.vendorId = toObjectId(vendorId);
+  }
+
+  if (status) {
+    match.status = status;
+  }
+
+  if (startDate || endDate) {
+    match.createdAt = {};
+
+    if (startDate) {
+      match.createdAt.$gte = new Date(startDate);
+    }
+
+    if (endDate) {
+      match.createdAt.$lte = new Date(endDate);
+    }
+  }
+
+  return match;
+};
 
 export const createBill    = (data) => Bill.create(data);
 export const getBillById   = (id)   => Bill.findById(id);
@@ -6,38 +59,50 @@ export const getBillById   = (id)   => Bill.findById(id);
 // Get all bills with pagination and filtering
 export const getBills = async (filters = {}) => {
   try {
-    const { page = 1, limit = 10, search, status, vendor_id } = filters;
-    
-    let query = {};
-    
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      organizationId,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      vendorId,
+      vendor_id
+    } = filters;
+    const pageNumber = toPositiveInt(page, 1);
+    const limitNumber = toPositiveInt(limit, 10);
+    const query = buildBillMatch({
+      organizationId,
+      status,
+      vendorId: vendorId || vendor_id
+    });
+
     if (search) {
       query.$or = [
-        { bill_number: { $regex: search, $options: "i" } },
+        { billNumber: { $regex: search, $options: "i" } },
+        { vendorName: { $regex: search, $options: "i" } },
         { notes: { $regex: search, $options: "i" } }
       ];
     }
-    
-    if (status) {
-      query.status = status;
-    }
-    
-    if (vendor_id) {
-      query.vendor_id = vendor_id;
-    }
+
+    const sortOptions = {
+      [sortBy]: sortOrder === 'asc' ? 1 : -1
+    };
 
     const bills = await Bill.find(query)
-      .populate('vendor_id', 'name email')
-      .sort({ created_at: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .populate('vendorId', 'name companyName email')
+      .sort(sortOptions)
+      .limit(limitNumber)
+      .skip((pageNumber - 1) * limitNumber);
 
     const total = await Bill.countDocuments(query);
 
     return {
       bills,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
+        current: pageNumber,
+        pages: Math.ceil(total / limitNumber),
         total
       }
     };
@@ -49,17 +114,7 @@ export const getBills = async (filters = {}) => {
 // Get bill statistics
 export const getBillStats = async (filters = {}) => {
   try {
-    const { startDate, endDate, vendorId, status } = filters;
-    
-    // Build filter object
-    const filter = {};
-    if (startDate || endDate) {
-      filter.createdAt = {};
-      if (startDate) filter.createdAt.$gte = new Date(startDate);
-      if (endDate) filter.createdAt.$lte = new Date(endDate);
-    }
-    if (vendorId) filter.vendor_id = vendorId;
-    if (status) filter.status = status;
+    const filter = buildBillMatch(filters);
 
     // Get basic counts
     const [
@@ -70,7 +125,7 @@ export const getBillStats = async (filters = {}) => {
     ] = await Promise.all([
       Bill.countDocuments(filter),
       Bill.countDocuments({ ...filter, status: "paid" }),
-      Bill.countDocuments({ ...filter, status: "pending" }),
+      Bill.countDocuments({ ...filter, status: { $in: PENDING_BILL_STATUSES } }),
       Bill.countDocuments({ ...filter, status: "overdue" })
     ]);
 
@@ -80,10 +135,18 @@ export const getBillStats = async (filters = {}) => {
       {
         $group: {
           _id: null,
-          totalExpenses: { $sum: "$total" },
-          paidExpenses: { $sum: { $cond: [{ $eq: ["$status", "paid"] }, "$total", 0] } },
-          pendingExpenses: { $sum: { $cond: [{ $eq: ["$status", "pending"] }, "$total", 0] } },
-          overdueExpenses: { $sum: { $cond: [{ $eq: ["$status", "overdue"] }, "$total", 0] } }
+          totalExpenses: { $sum: "$totalAmount" },
+          paidExpenses: { $sum: { $cond: [{ $eq: ["$status", "paid"] }, "$totalAmount", 0] } },
+          pendingExpenses: {
+            $sum: {
+              $cond: [
+                { $in: ["$status", PENDING_BILL_STATUSES] },
+                "$totalAmount",
+                0
+              ]
+            }
+          },
+          overdueExpenses: { $sum: { $cond: [{ $eq: ["$status", "overdue"] }, "$totalAmount", 0] } }
         }
       }
     ]);
@@ -109,5 +172,4 @@ export const getBillStats = async (filters = {}) => {
     throw new Error(`Failed to get bill statistics: ${error.message}`);
   }
 };
-
 
