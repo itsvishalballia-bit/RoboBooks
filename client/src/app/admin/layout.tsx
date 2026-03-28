@@ -291,6 +291,7 @@ export default function AdminLayout({
 
   const NavItem = ({ item }: { item: NavNode }) => {
     const itemStateKey = getMenuStateKey(item);
+    const ItemIcon = item.icon;
     const isActive = isActiveTab(item.href);
     const isExpanded = Boolean(item.children && isMenuExpanded(itemStateKey));
     const baseItemClass = `group flex w-full items-center rounded-2xl py-3 text-sm font-medium transition ${
@@ -317,6 +318,10 @@ export default function AdminLayout({
       }));
     };
 
+    if (!ItemIcon) {
+      return null;
+    }
+
     return (
       <div className="space-y-1">
         {item.children ? (
@@ -328,7 +333,7 @@ export default function AdminLayout({
             className={baseItemClass}
           >
             <span className="flex items-center">
-              <item.icon
+              <ItemIcon
                 className={`h-5 w-5 ${
                   isActive || isExpanded
                     ? "text-[#0aa6c9]"
@@ -351,7 +356,7 @@ export default function AdminLayout({
             className={baseItemClass}
           >
             <span className="flex items-center">
-              <item.icon
+              <ItemIcon
                 className={`h-5 w-5 ${
                   isActive || isExpanded
                     ? "text-[#0aa6c9]"
