@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import "jodit/es5/jodit.min.css";
+
+import { useEffect, useState } from "react";
 import {
   defaultBlogContent,
   fetchAdminCmsSection,
@@ -10,6 +12,7 @@ import {
   updateAdminCmsSection,
   type BlogCmsContent,
 } from "@/services/cmsService";
+import CmsJoditEditor from "./components/CmsJoditEditor";
 
 const createEmptyPost = () => ({
   id: `post-${Date.now()}`,
@@ -401,7 +404,7 @@ export default function AdminCmsBlogPage() {
                       rows={3}
                     />
 
-                    <RichTextEditor
+                    <CmsJoditEditor
                       label="Takeaway Box Content"
                       value={post.takeaway}
                       onChange={(value) => updatePost(index, "takeaway", value)}
@@ -448,7 +451,7 @@ export default function AdminCmsBlogPage() {
                               Remove
                             </button>
                           </div>
-                          <RichTextEditor
+                          <CmsJoditEditor
                             label=""
                             value={paragraph}
                             onChange={(value) => updateParagraph(index, paragraphIndex, value)}
@@ -480,248 +483,6 @@ export default function AdminCmsBlogPage() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-const RICH_TEXT_ACTIONS: Array<{
-  label: string;
-  command: string;
-  title: string;
-  value?: string;
-}> = [
-  { label: "B", command: "bold", title: "Bold" },
-  { label: "I", command: "italic", title: "Italic" },
-  { label: "U", command: "underline", title: "Underline" },
-  { label: "H2", command: "formatBlock", value: "h2", title: "Heading" },
-  { label: "Quote", command: "formatBlock", value: "blockquote", title: "Quote" },
-  { label: "List", command: "insertUnorderedList", title: "Bullet list" },
-  { label: "Link", command: "createLink", title: "Add link" },
-];
-
-function normalizeRichText(value: string) {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return "";
-  }
-
-  const hasHtmlTag = /<\/?[a-z][\s\S]*>/i.test(trimmed);
-  if (hasHtmlTag) {
-    return trimmed;
-  }
-
-  return trimmed
-    .split(/\n{2,}/)
-    .map((paragraph) => `<p>${paragraph.replace(/\n/g, "<br>")}</p>`)
-    .join("");
-}
-
-function normalizeEditorOutput(value: string) {
-  return value
-    .replace(/<div><br><\/div>/gi, "<p><br></p>")
-    .replace(/<div>/gi, "<p>")
-    .replace(/<\/div>/gi, "</p>")
-    .replace(/&nbsp;/gi, " ")
-    .trim();
-}
-
-function RichTextEditor({
-  label,
-  value,
-  onChange,
-  minHeight = 180,
-  onUploadMedia,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  minHeight?: number;
-  onUploadMedia: (file: File) => Promise<{ url: string; kind: "image" | "video"; mimeType: string }>;
-}) {
-  const editorRef = useRef<HTMLDivElement | null>(null);
-  const normalizedValue = useMemo(() => normalizeRichText(value), [value]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
-
-  useEffect(() => {
-    const editor = editorRef.current;
-    if (!editor) {
-      return;
-    }
-
-    if (editor.innerHTML !== normalizedValue) {
-      editor.innerHTML = normalizedValue;
-    }
-  }, [normalizedValue]);
-
-  const emitChange = () => {
-    const nextValue = normalizeEditorOutput(editorRef.current?.innerHTML ?? "");
-    onChange(
-      nextValue === "<br>" || nextValue === "<p><br></p>" || !nextValue ? "" : nextValue
-    );
-  };
-
-  const applyCommand = (command: string, commandValue?: string) => {
-    const editor = editorRef.current;
-    if (!editor) {
-      return;
-    }
-
-    editor.focus();
-
-    if (command === "createLink") {
-      const url = window.prompt("Enter link URL", "https://");
-      if (!url) {
-        return;
-      }
-
-      document.execCommand(command, false, url);
-      emitChange();
-      return;
-    }
-
-    document.execCommand(command, false, commandValue);
-    emitChange();
-  };
-
-  const moveCaretToPoint = (x: number, y: number) => {
-    if (typeof document === "undefined") {
-      return;
-    }
-
-    const doc = document as Document & {
-      caretRangeFromPoint?: (x: number, y: number) => Range | null;
-      caretPositionFromPoint?: (
-        x: number,
-        y: number
-      ) => { offsetNode: Node; offset: number } | null;
-    };
-
-    const selection = window.getSelection();
-    if (!selection) {
-      return;
-    }
-
-    const caretRangeFromPoint = doc.caretRangeFromPoint?.(x, y);
-    if (caretRangeFromPoint) {
-      selection.removeAllRanges();
-      selection.addRange(caretRangeFromPoint);
-      return;
-    }
-
-    const caretPosition = doc.caretPositionFromPoint?.(x, y);
-    if (caretPosition) {
-      const range = document.createRange();
-      range.setStart(caretPosition.offsetNode, caretPosition.offset);
-      range.collapse(true);
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
-  };
-
-  const insertMedia = async (file: File, coordinates?: { x: number; y: number }) => {
-    const editor = editorRef.current;
-    if (!editor) {
-      return;
-    }
-
-    try {
-      setIsUploadingMedia(true);
-      editor.focus();
-
-      if (coordinates) {
-        moveCaretToPoint(coordinates.x, coordinates.y);
-      }
-
-      const media = await onUploadMedia(file);
-      const mediaHtml =
-        media.kind === "video"
-          ? `<video controls playsinline><source src="${media.url}" type="${media.mimeType}"></video>`
-          : `<img src="${media.url}" alt="${file.name.replace(/"/g, "&quot;")}">`;
-
-      document.execCommand("insertHTML", false, mediaHtml);
-      emitChange();
-    } catch (error) {
-      console.error("Failed to upload editor media", error);
-    } finally {
-      setIsUploadingMedia(false);
-      setIsDragging(false);
-    }
-  };
-
-  const handleDrop = async (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const file = Array.from(event.dataTransfer.files).find((item) =>
-      item.type.startsWith("image/") || item.type.startsWith("video/")
-    );
-
-    if (!file) {
-      setIsDragging(false);
-      return;
-    }
-
-    await insertMedia(file, { x: event.clientX, y: event.clientY });
-  };
-
-  return (
-    <div className="block">
-      {label ? (
-        <span className="mb-2 block text-sm font-medium text-[#4d5f7c]">{label}</span>
-      ) : null}
-
-      <div className="overflow-hidden rounded-[24px] border border-[#d8e7f1] bg-[#fbfdff]">
-        <div className="flex flex-wrap gap-2 border-b border-[#d8e7f1] bg-white px-3 py-3">
-          {RICH_TEXT_ACTIONS.map((action) => (
-            <button
-              key={`${action.command}-${action.label}`}
-              type="button"
-              title={action.title}
-              onClick={() => applyCommand(action.command, action.value)}
-              className="rounded-full border border-[#d8e7f1] bg-[#fbfdff] px-3 py-1.5 text-sm font-semibold text-[#0f2344] transition hover:border-[#0aa6c9]/35 hover:text-[#0088c5]"
-            >
-              {action.label}
-            </button>
-          ))}
-          <label className="rounded-full border border-[#d8e7f1] bg-[#fbfdff] px-3 py-1.5 text-sm font-semibold text-[#0f2344] transition hover:border-[#0aa6c9]/35 hover:text-[#0088c5]">
-            {isUploadingMedia ? "Uploading..." : "Media"}
-            <input
-              type="file"
-              accept="image/*,video/*"
-              className="hidden"
-              disabled={isUploadingMedia}
-              onChange={async (event) => {
-                const file = event.target.files?.[0];
-                if (file) {
-                  await insertMedia(file);
-                }
-                event.currentTarget.value = "";
-              }}
-            />
-          </label>
-        </div>
-
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={emitChange}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-          className={`w-full px-4 py-3 text-[#0f2344] outline-none [&_blockquote]:border-l-4 [&_blockquote]:border-[#0aa6c9]/30 [&_blockquote]:pl-4 [&_blockquote]:italic [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_img]:my-4 [&_img]:max-h-[360px] [&_img]:w-auto [&_img]:max-w-full [&_img]:rounded-[20px] [&_li]:ml-5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:min-h-[1.5rem] [&_ul]:list-disc [&_ul]:pl-4 [&_video]:my-4 [&_video]:max-h-[360px] [&_video]:w-full [&_video]:rounded-[20px] ${
-            isDragging ? "bg-[#effbff]" : ""
-          }`}
-          style={{ minHeight }}
-        />
-      </div>
-
-      <p className="mt-2 text-xs text-[#6b7d99]">
-        Bold, italic, underline, heading, quote, list, links, aur image/video drag-and-drop support karta hai.
-      </p>
     </div>
   );
 }
