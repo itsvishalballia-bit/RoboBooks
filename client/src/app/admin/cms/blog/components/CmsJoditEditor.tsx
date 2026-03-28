@@ -152,6 +152,13 @@ export default function CmsJoditEditor({
           : `<p><img src="${resolvedUrl}" alt="${escapeHtmlAttribute(file.name)}" /></p><p><br></p>`;
 
       editor?.selection?.insertHTML?.(html);
+
+      if (typeof window !== "undefined") {
+        await new Promise<void>((resolve) => {
+          window.requestAnimationFrame(() => resolve());
+        });
+      }
+
       pushChange(readCurrentEditorHtml());
     } catch (error) {
       console.error("Failed to upload editor media", error);
