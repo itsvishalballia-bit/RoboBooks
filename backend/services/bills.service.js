@@ -1,3 +1,4 @@
+import Bill from '../models/Bill.js';
 import mongoose from 'mongoose';
 import Bill from '../models/Bill.js';
 
